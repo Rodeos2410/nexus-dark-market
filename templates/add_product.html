@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить товар{% endblock %}
+
+{% block content %}
+<div class="auth-center">
+    <div class="auth-card" style="width: 100%; max-width: 1100px;">
+        <div class="product-card">
+            <h2>Управление товарами</h2>
+            
+        {% if not current_user.telegram_username %}
+        <div style="background: #ff9800; color: #000; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            <strong>⚠️ Внимание!</strong> Для получения уведомлений о продажах укажите ваш Telegram username в <a href="{{ url_for('profile') }}" style="color: #000; text-decoration: underline;">профиле</a> и перейдите в <a href="https://t.me/NexusDarkBot" target="_blank" style="color: #000; text-decoration: underline; font-weight: bold;">бота</a>
+        </div>
+        {% elif not current_user.telegram_chat_id %}
+        <div style="background: #ff9800; color: #000; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            <strong>⚠️ Нужно запустить бота!</strong> Username: @{{ current_user.telegram_username }}<br>
+            <small>Перейдите к <a href="https://t.me/NexusDarkBot" target="_blank" style="color: #000; text-decoration: underline;">боту</a> и отправьте /start</small>
+        </div>
+        {% else %}
+        <div style="background: #4caf50; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            ✅ Уведомления настроены: @{{ current_user.telegram_username }}
+        </div>
+        {% endif %}
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div style="color: green; text-align: center; margin: 10px;">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
+                <label for="name">Название:</label>
+                <input type="text" id="name" name="name" required maxlength="200">
+                
+                <label for="description">Описание:</label>
+                <textarea id="description" name="description" rows="3" style="width: 90%; margin: 6px auto 0 auto; display: block; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: #0b0b0d; color: #fff; box-sizing: border-box; font-family: Arial, sans-serif; resize: vertical;"></textarea>
+                
+                <label for="price">Цена (₽):</label>
+                <input type="number" id="price" name="price" step="0.01" min="0.01" required>
+                
+                <label for="stock">Количество на складе:</label>
+                <input type="number" id="stock" name="stock" min="0" step="1" value="0" required>
+
+                <label for="image">Изображение:</label>
+                <input type="file" id="image" name="image" accept="image/*" style="color: #fff; background: #0b0b0d;">
+                
+                <button type="submit" class="button">Добавить</button>
+            </form>
+
+            {% if products %}
+            <h3 style="margin-top:24px;">Мои товары</h3>
+            <div class="products-grid">
+                {% for product in products %}
+                <div class="product-card">
+                    {% if product.image %}
+                        <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div style="height: 140px; background: #1a1a1f; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666;">Без изображения</div>
+                    {% endif %}
+                    <h3>{{ product.name }}</h3>
+                    <p>{{ product.description }}</p>
+                    <div class="price">{{ '%.2f'|format(product.price) }}₽ · Остаток: {{ product.stock }}</div>
+                    <div class="product-actions">
+                        <form onsubmit="return updateProduct(event, {{ product.id }})" style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                            <input type="text" name="name" placeholder="Название" value="{{ product.name }}">
+                            <input type="number" step="0.01" min="0.01" name="price" placeholder="Цена" value="{{ '%.2f'|format(product.price) }}">
+                            <input type="number" step="1" min="0" name="stock" placeholder="Остаток" value="{{ product.stock }}">
+                            <textarea name="description" rows="2" placeholder="Описание">{{ product.description }}</textarea>
+                            <input type="file" name="image" accept="image/*">
+                            <div style="display:flex; gap:8px;">
+                                <button class="button" type="submit">Сохранить</button>
+                                <button class="button" style="background:#d32f2f;" type="button" onclick="deleteProduct({{ product.id }})">Удалить</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+                <p style="color:#666; text-align:center;">У вас пока нет товаров.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    
+    if (type === 'success') {
+        notification.style.background = '#4caf50';
+    } else if (type === 'error') {
+        notification.style.background = '#f44336';
+    } else {
+        notification.style.background = '#2196f3';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+}
+
+function deleteProduct(id) {
+    fetch(`/product/${id}/delete`, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) { 
+                showNotification(d.message || 'Ошибка удаления', 'error');
+                return; 
+            }
+            showNotification('Товар успешно удален', 'success');
+            setTimeout(() => location.reload(), 1000);
+        })
+        .catch(() => showNotification('Ошибка сети при удалении', 'error'));
+}
+
+function updateProduct(event, id) {
+    event.preventDefault();
+    const form = event.target;
+    const data = new FormData(form);
+    fetch(`/product/${id}/update`, { method: 'POST', body: data })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) { 
+                showNotification(d.message || 'Ошибка сохранения', 'error');
+                return; 
+            }
+            showNotification('Товар успешно обновлен', 'success');
+            setTimeout(() => location.reload(), 1000);
+        })
+        .catch(() => showNotification('Ошибка сети при сохранении', 'error'));
+    return false;
+}
+</script>
+{% endblock %}

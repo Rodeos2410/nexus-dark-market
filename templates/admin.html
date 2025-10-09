@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Админская панель{% endblock %}
+
+{% block content %}
+<div class="auth-center">
+    <div class="auth-card" style="width: 100%; max-width: 1200px;">
+        <div class="product-card">
+            <h2>🔧 Админская панель</h2>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div style="color: green; text-align: center; margin: 10px;">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div style="background: #1a1a1f; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3>📊 Статистика</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                    <div style="background: #0b0b0d; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #4CAF50;">{{ users|length }}</div>
+                        <div style="color: #666;">Всего пользователей</div>
+                    </div>
+                    <div style="background: #0b0b0d; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #2196F3;">{{ users|selectattr('is_admin')|list|length }}</div>
+                        <div style="color: #666;">Администраторов</div>
+                    </div>
+                    <div style="background: #0b0b0d; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #f44336;">{{ users|selectattr('is_banned')|list|length }}</div>
+                        <div style="color: #666;">Заблокированных</div>
+                    </div>
+                    <div style="background: #0b0b0d; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #FF9800;">{{ users|rejectattr('is_banned')|list|length }}</div>
+                        <div style="color: #666;">Активных</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>👥 Управление пользователями</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; background: #1a1a1f; border-radius: 8px; overflow: hidden;">
+                    <thead>
+                        <tr style="background: #0b0b0d;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">ID</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Пользователь</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Email</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Баланс</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Telegram</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Статус</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Регистрация</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr style="border-bottom: 1px solid #333;">
+                            <td style="padding: 12px;">{{ user.id }}</td>
+                            <td style="padding: 12px;">
+                                <div style="font-weight: bold;">{{ user.username }}</div>
+                                {% if user.telegram_username %}
+                                    <div style="font-size: 12px; color: #666;">@{{ user.telegram_username }}</div>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px;">{{ user.email }}</td>
+                            <td style="padding: 12px;">{{ "%.2f"|format(user.balance) }}₽</td>
+                            <td style="padding: 12px;">
+                                {% if user.telegram_username %}
+                                    <div style="font-size: 12px;">@{{ user.telegram_username }}</div>
+                                    {% if user.telegram_chat_id %}
+                                        <div style="font-size: 10px; color: #4CAF50;">✅ Настроен</div>
+                                    {% else %}
+                                        <div style="font-size: 10px; color: #FF9800;">⚠️ Нужен /start</div>
+                                    {% endif %}
+                                {% else %}
+                                    <div style="font-size: 12px; color: #666;">Не указан</div>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px;">
+                                {% if user.is_admin %}
+                                    <span style="background: #9C27B0; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Админ</span>
+                                {% endif %}
+                                {% if user.is_banned %}
+                                    <span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Заблокирован</span>
+                                {% else %}
+                                    <span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Активен</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px;">{{ user.created_at.strftime('%d.%m.%Y') }}</td>
+                            <td style="padding: 12px;">
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                    {% if user.id != current_user.id %}
+                                        {% if user.is_banned %}
+                                            <button onclick="unbanUser({{ user.id }})" class="button" style="background: #4CAF50; font-size: 12px; padding: 4px 8px;">Разблокировать</button>
+                                        {% else %}
+                                            <button onclick="banUser({{ user.id }})" class="button" style="background: #f44336; font-size: 12px; padding: 4px 8px;">Заблокировать</button>
+                                        {% endif %}
+                                        
+                                        {% if not user.is_admin %}
+                                            <button onclick="makeAdmin({{ user.id }})" class="button" style="background: #9C27B0; font-size: 12px; padding: 4px 8px;">Сделать админом</button>
+                                        {% else %}
+                                            <button onclick="removeAdmin({{ user.id }})" class="button" style="background: #FF9800; font-size: 12px; padding: 4px 8px;">Убрать админа</button>
+                                        {% endif %}
+                                        
+                                        {% if user.telegram_username and not user.telegram_chat_id and user.username != 'admin' %}
+                                            <button onclick="setupTelegram({{ user.id }})" class="button" style="background: #2196F3; font-size: 12px; padding: 4px 8px;">Настроить Telegram</button>
+                                        {% endif %}
+                                        
+                                        <button onclick="deleteUser({{ user.id }})" class="button" style="background: #d32f2f; font-size: 12px; padding: 4px 8px;">Удалить</button>
+                                    {% else %}
+                                        <span style="color: #666; font-size: 12px;">Вы</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    
+    if (type === 'success') {
+        notification.style.background = '#4caf50';
+    } else if (type === 'error') {
+        notification.style.background = '#f44336';
+    } else {
+        notification.style.background = '#2196f3';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+}
+
+function banUser(userId) {
+    if (!confirm('Заблокировать пользователя?')) return;
+    
+    fetch(`/admin/user/${userId}/ban`, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showNotification(d.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(d.message, 'error');
+            }
+        })
+        .catch(() => showNotification('Ошибка сети', 'error'));
+}
+
+function unbanUser(userId) {
+    if (!confirm('Разблокировать пользователя?')) return;
+    
+    fetch(`/admin/user/${userId}/unban`, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showNotification(d.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(d.message, 'error');
+            }
+        })
+        .catch(() => showNotification('Ошибка сети', 'error'));
+}
+
+function makeAdmin(userId) {
+    if (!confirm('Назначить пользователя администратором?')) return;
+    
+    fetch(`/admin/user/${userId}/make_admin`, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showNotification(d.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(d.message, 'error');
+            }
+        })
+        .catch(() => showNotification('Ошибка сети', 'error'));
+}
+
+function removeAdmin(userId) {
+    if (!confirm('Убрать права администратора у пользователя?')) return;
+    
+    fetch(`/admin/user/${userId}/remove_admin`, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showNotification(d.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(d.message, 'error');
+            }
+        })
+        .catch(() => showNotification('Ошибка сети', 'error'));
+}
+
+function setupTelegram(userId) {
+    const chatId = prompt('Введите Telegram chat_id пользователя:\n\nДля получения chat_id:\n1. Перейдите к боту @NexusDarkBot\n2. Отправьте любое сообщение\n3. Скопируйте ваш chat_id из админки бота');
+    if (!chatId) return;
+    
+    // Проверяем, что chat_id содержит только цифры
+    if (!/^\d+$/.test(chatId)) {
+        showNotification('Chat ID должен содержать только цифры!', 'error');
+        return;
+    }
+    
+    fetch(`/admin/user/${userId}/setup_telegram`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId })
+    })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showNotification(d.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(d.message, 'error');
+            }
+        })
+        .catch(() => showNotification('Ошибка сети', 'error'));
+}
+
+function deleteUser(userId) {
+    if (!confirm('ВНИМАНИЕ! Удаление пользователя необратимо!\n\nЭто действие удалит:\n- Аккаунт пользователя\n- Все его товары\n- Все связанные данные\n\nПродолжить?')) return;
+    
+    fetch(`/admin/user/${userId}/delete`, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showNotification(d.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(d.message, 'error');
+            }
+        })
+        .catch(() => showNotification('Ошибка сети', 'error'));
+}
+</script>
+{% endblock %}

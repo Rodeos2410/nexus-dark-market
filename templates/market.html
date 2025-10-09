@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Маркетплейс{% endblock %}
+
+{% block content %}
+<h1 class="rainbow-text">Nexus Dark</h1>
+
+<div class="container">
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+            {% if product.image %}
+                <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}">
+            {% else %}
+                <div style="height: 140px; background: #1a1a1f; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666;">
+                    Без изображения
+                </div>
+            {% endif %}
+            
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description }}</p>
+            <div class="price">{{ product.price }}₽</div>
+            <div class="muted">Остаток: {{ product.stock }}</div>
+            
+            <div class="product-actions">
+                {% if current_user.is_authenticated %}
+                    {% if product.seller_id != current_user.id %}
+                        <button onclick="addToCart({{ product.id }})" class="button" {% if product.stock is not none and product.stock <= 0 %}disabled style="opacity:.6; cursor:not-allowed;"{% endif %}>В корзину</button>
+                    {% else %}
+                        <span class="button" style="background:#333; cursor:default;">Ваш товар</span>
+                    {% endif %}
+                {% else %}
+                    <a class="button" href="{{ url_for('login') }}">Войти, чтобы купить</a>
+                    <a class="button" href="{{ url_for('register') }}">Регистрация</a>
+                {% endif %}
+                <span>Продавец: {{ product.seller.username }}</span>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not products %}
+        <div style="grid-column: 1 / -1; text-align: center; color: #666; padding: 40px;">
+            <h3>Пока нет товаров</h3>
+            <p>Станьте первым, кто добавит товар!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Добавляем JavaScript внизу страницы -->
+<script>
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    
+    if (type === 'success') {
+        notification.style.background = '#4caf50';
+    } else if (type === 'error') {
+        notification.style.background = '#f44336';
+    } else {
+        notification.style.background = '#2196f3';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+}
+
+function addToCart(productId) {
+    fetch(`/cart/add/${productId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Динамически обновляем панель корзины и счётчик
+            if (typeof refreshCart === 'function') {
+                refreshCart().then(() => {
+                    const panel = document.getElementById('cart-panel');
+                    if (panel && panel.classList.contains('cart-panel--hidden')) {
+                        toggleCart();
+                    }
+                });
+            }
+            showNotification('Товар добавлен в корзину!', 'success');
+        } else {
+            showNotification('Ошибка: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        showNotification('Не удалось добавить товар. Попробуйте позже.', 'error');
+    });
+}
+</script>
+{% endblock %}

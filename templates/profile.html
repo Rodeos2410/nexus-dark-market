@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="profile">
+    <div class="profile-grid">
+        <section class="card">
+            <div class="profile-header">
+                <div class="avatar">👤</div>
+                <div class="profile-meta">
+                    <h2 class="profile-title">{{ current_user.username }}</h2>
+                    <div class="muted">{{ current_user.email }}</div>
+                    <div class="muted">На сайте с {{ current_user.created_at.strftime('%d.%m.%Y') }}</div>
+                </div>
+            </div>
+            <div class="profile-stats">
+                <div class="stat">
+                    <div class="stat-value">{{ current_user.products|length }}</div>
+                    <div class="stat-label">Товаров</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="user-balance">{{ "%.2f"|format(current_user.balance) }}₽</div>
+                    <div class="stat-label">Баланс</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>Telegram уведомления</h3>
+            
+            {% if current_user.telegram_chat_id %}
+                <div style="background: #4caf50; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                    ✅ <b>Telegram уведомления настроены!</b><br>
+                    <small>Вы будете получать уведомления о продажах ваших товаров</small>
+                </div>
+                
+                <!-- Тест уведомлений -->
+                <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; margin-top: 15px; border: 1px solid #444;">
+                    <strong>🧪 Тест уведомлений:</strong><br>
+                    <button onclick="testTelegram()" class="button" style="background:#4caf50; margin-top: 8px;">Тест Telegram</button>
+                    <div class="hint muted" style="margin-top: 8px;">
+                        Отправит тестовое сообщение в ваш Telegram
+                    </div>
+                </div>
+            {% else %}
+                <div style="background: #ff9800; color: #000; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                    ⚠️ <b>Уведомления не настроены</b><br>
+                    <small>Настройте уведомления для получения информации о продажах</small>
+                </div>
+                
+                <!-- Ручная настройка -->
+                <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; margin-top: 15px; border: 1px solid #444;">
+                    <strong>🔧 Настройка уведомлений:</strong><br>
+                    <div class="inline-form" style="margin-top: 8px;">
+                        <input id="manual-chat-id" type="text" placeholder="Ваш Telegram Chat ID" style="flex: 1;">
+                        <button onclick="manualSetup()" class="button" style="background:#2196F3;">Настроить</button>
+                    </div>
+                    <div class="hint muted" style="margin-top: 8px;">
+                        <a href="https://t.me/NexusDarkBot?start=get_id" target="_blank" style="color: #2196F3; text-decoration: none;">Запустить бота</a> чтобы получить ID
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="card">
+            <h3>Пополнение баланса</h3>
+            <div class="inline-form">
+                <input id="deposit-amount" type="number" min="1" step="1" placeholder="Сумма, ₽">
+                <button onclick="deposit()" class="button" style="background:#4CAF50;">Пополнить</button>
+            </div>
+            <div class="hint muted">Минимум 1₽. Максимум 10000₽ за раз.</div>
+            <div class="divider"></div>
+            <button onclick="showCryptoModal()" class="button">Оплатить криптовалютой</button>
+        </section>
+
+        <section class="card danger">
+            <h3>Сессия</h3>
+            <a href="{{ url_for('logout') }}" class="button" style="background:#d32f2f;">Выйти</a>
+        </section>
+    </div>
+</div>
+
+<!-- Модальное окно для криптоплатежей -->
+<div id="crypto-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">
+    <div class="auth-center">
+        <div class="auth-card">
+            <div class="product-card">
+                <h3>Оплата криптовалютой</h3>
+                <p>Отправьте сумму на адрес:</p>
+                <p><strong>USDT (TRC20):</strong></p>
+                <p style="word-break: break-all; background: #0b0b0d; padding: 10px; border-radius: 8px; font-family: monospace;">TQ2r8...ваш_адрес</p>
+                <button onclick="hideCryptoModal()" class="button">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+function manualSetup() {
+    const chatId = document.getElementById('manual-chat-id').value.trim();
+    
+    if (!chatId) {
+        showNotification('Введите ваш Telegram Chat ID', 'error');
+        return;
+    }
+    
+    // Отправляем запрос на ручную настройку
+    fetch('/telegram/manual-setup', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            chat_id: chatId
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            showNotification('Уведомления настроены успешно! Проверьте Telegram.', 'success');
+            // Обновляем страницу через 2 секунды
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showNotification(d.message || 'Ошибка настройки', 'error');
+        }
+    })
+    .catch(() => showNotification('Ошибка сети', 'error'));
+}
+
+function testTelegram() {
+    showNotification('Отправляем тестовое сообщение...', 'info');
+    
+    // Отправляем тестовое сообщение
+    fetch('/telegram/test', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            showNotification('Тестовое сообщение отправлено! Проверьте Telegram.', 'success');
+        } else {
+            showNotification(d.message || 'Ошибка отправки теста', 'error');
+        }
+    })
+    .catch(() => showNotification('Ошибка сети', 'error'));
+}
+</script>
+{% endblock %}

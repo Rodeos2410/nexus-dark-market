@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="auth-center">
+    <div class="auth-card">
+        <div class="product-card">
+            <h1 class="rainbow-text">Nexus Dark</h1>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div style="color: red; text-align: center; margin: 10px;">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST">
+                <h2>Вход</h2>
+                
+                <input type="text" placeholder="Имя пользователя" id="username" name="username" required>
+                
+                <input type="password" placeholder="Пароль" id="password" name="password" required>
+                <br>
+                <button type="submit" class="button">Войти</button>
+                
+                <a href="{{ url_for('register') }}" class="rainbow-text-small">Регистрация</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

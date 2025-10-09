@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Маркетплейс{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="site-header" style="align-self: stretch; width: 100%;">
+        <div class="header-bar" style="display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:12px 0; margin:0 -20px;  width:100%;">
+            <nav class="main-nav" style="display:flex; align-items:center; gap:12px; position: relative;">
+                <a class="button" href="{{ url_for('market') }}">Маркет</a>
+                <!-- <a class="button" href="{{ url_for('users') }}">Пользователи</a> -->
+                {% if current_user.is_authenticated %}
+                    <a class="button" href="{{ url_for('add_product') }}">Добавить товар</a>
+                    <a class="button" href="{{ url_for('profile') }}">Профиль</a>
+                    {% if current_user.is_admin %}
+                        <a class="button" href="{{ url_for('admin_panel') }}" style="background:#9C27B0;">Админка</a>
+                    {% endif %}
+                    <!-- <a class="button" style="background:#d32f2f;" href="{{ url_for('logout') }}">Выйти</a> -->
+            {% else %}
+                    <a class="button" href="{{ url_for('login') }}">Вход</a>
+                    <a class="button" href="{{ url_for('register') }}">Регистрация</a>
+                {% endif %}
+                <div id="cart-anchor" style="position: relative;">
+                    <button id="cart-button" type="button" class="button" onclick="toggleCart()" aria-controls="cart-panel" aria-expanded="false">
+                        🛒 Корзина <span id="cart-count">{{ cart_count }}</span>
+                    </button>
+                    <aside id="cart-panel" class="cart-panel cart-panel--hidden" aria-hidden="true" style="position: absolute; top: calc(100% + 8px); right: 0; z-index: 1100;">
+                        <div class="cart-panel__header">
+                            <h3>Корзина</h3>
+                            <button class="button" onclick="toggleCart()">Закрыть</button>
+                </div>
+                        <div class="cart-panel__content" id="cart-items">
+                            {% if cart_items %}
+                                {% for item in cart_items %}
+                                <div class="cart-item">
+                                    <div class="cart-item__title">{{ item.product.name }}</div>
+                                    <div class="cart-item__controls">
+                                        <button class="button" onclick="decreaseQuantity({{ item.product.id }})">−</button>
+                                        <span id="qty-{{ item.product.id }}">{{ item.quantity }}</span>
+                                        <button class="button" onclick="increaseQuantity({{ item.product.id }})">+</button>
+                                        <span class="cart-item__price">{{ '%.2f'|format(item.product.price * item.quantity) }}₽</span>
+                                        <button class="button" style="background:#d32f2f" onclick="removeFromCart({{ item.product.id }})">Удалить</button>
+            </div>
+        </div>
+        {% endfor %}
+                            {% else %}
+                                <p style="color:#666">Корзина пуста</p>
+        {% endif %}
+    </div>
+                        <div class="cart-panel__total" style="padding:12px; display:flex; justify-content:space-between;">
+                            <span>Итого:</span>
+                            <strong>{{ '%.2f'|format(cart_total) }}₽</strong>
+                        </div>
+                        <div class="cart-panel__footer">
+                            <button class="button" onclick="checkout()">Оформить заказ</button>
+                        </div>
+                    </aside>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+
+    <div class="page-wrapper">
+        {% block content %}{% endblock %}
+</div>
+
+    {% block scripts %}
+    <script>
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+        
+        if (type === 'success') {
+            notification.style.background = '#4caf50';
+        } else if (type === 'error') {
+            notification.style.background = '#f44336';
+        } else {
+            notification.style.background = '#2196f3';
+        }
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
+    }
+
+    function renderCart(data) {
+        const container = document.getElementById('cart-items');
+        const totalElWrap = document.querySelector('.cart-panel__total strong');
+        const countEl = document.getElementById('cart-count');
+        if (!container) return;
+        if (!data || !data.items || data.items.length === 0) {
+            container.innerHTML = '<p style="color:#666">Корзина пуста</p>';
+            if (totalElWrap) totalElWrap.textContent = '0.00₽';
+            if (countEl) countEl.textContent = '0';
+            return;
+        }
+        const html = data.items.map(it => `
+            <div class="cart-item">
+                <div class="cart-item__title">${it.name}</div>
+                <div class="cart-item__controls">
+                    <button class="button" onclick="decreaseQuantity(${it.productId})">−</button>
+                    <span id="qty-${it.productId}">${it.quantity}</span>
+                    <button class="button" onclick="increaseQuantity(${it.productId})">+</button>
+                    <span class="cart-item__price">${it.lineTotal.toFixed(2)}₽</span>
+                    <button class="button" style="background:#d32f2f" onclick="removeFromCart(${it.productId})">Удалить</button>
+                </div>
+            </div>`).join('');
+        container.innerHTML = html;
+        if (totalElWrap) totalElWrap.textContent = `${data.total.toFixed(2)}₽`;
+        if (countEl) countEl.textContent = String(data.count);
+    }
+
+    function refreshCart() {
+        return fetch('/cart/list')
+            .then(r => r.json())
+            .then(d => { if (d.success) renderCart(d); })
+            .catch(() => {});
+    }
+        function toggleCart() {
+        const panel = document.getElementById('cart-panel');
+        if (!panel) return;
+        const hiddenClass = 'cart-panel--hidden';
+        const isHidden = panel.classList.toggle(hiddenClass);
+        panel.setAttribute('aria-hidden', isHidden ? 'true' : 'false');
+        }
+
+        function updateCart(productId, quantity) {
+            return fetch('/cart/update/' + productId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: quantity })
+            })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) showNotification(d.message || 'Не удалось обновить корзину', 'error');
+            if (d.success) refreshCart();
+            return !!d.success;
+        })
+        .catch(e => { console.error(e); showNotification('Ошибка при обновлении', 'error'); return false; });
+        }
+
+        function increaseQuantity(productId) {
+        const el = document.getElementById('qty-' + productId);
+        if (!el) return;
+        const next = (parseInt(el.textContent, 10) || 0) + 1;
+        updateCart(productId, next).then(ok => { if (ok) el.textContent = String(next); });
+        }
+
+        function decreaseQuantity(productId) {
+        const el = document.getElementById('qty-' + productId);
+        if (!el) return;
+        const curr = parseInt(el.textContent, 10) || 1;
+        if (curr <= 1) return;
+        const next = curr - 1;
+        updateCart(productId, next).then(ok => { if (ok) el.textContent = String(next); });
+        }
+
+        function checkout() {
+            fetch('/checkout', { method: 'POST' })
+            .then(r => r.json())
+            .then(d => { 
+                showNotification(d.message || 'Заказ оформлен', d.success ? 'success' : 'error'); 
+                if (d.success) setTimeout(() => location.reload(), 1000); 
+            })
+                .catch(() => showNotification('Ошибка при оформлении', 'error'));
+        }
+
+    function removeFromCart(productId) {
+        fetch('/cart/remove/' + productId, { method: 'POST' })
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success) { 
+                    showNotification(d.message || 'Не удалось удалить', 'error'); 
+                    return; 
+                }
+                refreshCart();
+                showNotification('Товар удалён из корзины', 'success');
+            })
+            .catch(() => showNotification('Ошибка при удалении', 'error'));
+    }
+
+        function showCryptoModal() {
+            const modal = document.getElementById('crypto-modal');
+            if (modal) modal.style.display = 'block';
+        }
+
+        function hideCryptoModal() {
+            const modal = document.getElementById('crypto-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+    function deposit(valueMaybe) {
+            const input = document.getElementById('deposit-amount');
+        const raw = (typeof valueMaybe !== 'undefined' && valueMaybe !== null && valueMaybe !== '') ? valueMaybe : (input ? input.value : '');
+        const amount = parseFloat(raw);
+        if (isNaN(amount) || amount <= 0) { 
+            showNotification('Введите корректную сумму', 'error'); 
+            return; 
+        }
+        fetch('/deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount }) })
+        .then(r => r.json())
+        .then(d => { 
+            if (d.success) {
+                showNotification('Баланс успешно пополнен', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(d.message || 'Ошибка пополнения', 'error');
+            }
+        })
+            .catch(() => showNotification('Ошибка при пополнении', 'error'));
+        }
+    // Первичная подгрузка корзины для актуализации цифр
+    if ({{ 'true' if current_user.is_authenticated else 'false' }}) {
+        refreshCart();
+    }
+    </script>
+    {% endblock %}
+</body>
+</html>

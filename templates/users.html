@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Пользователи{% endblock %}
+
+{% block content %}
+<h1 class="rainbow-text">Пользователи</h1>
+
+<div class="container">
+    <div class="products-grid">
+        {% for user in users %}
+        <div class="product-card">
+            <div style="height: 140px; background: linear-gradient(135deg, #8149DD, #4a90e2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 3em; color: white;">
+                👤
+            </div>
+            <h3>{{ user.username }}</h3>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Зарегистрирован:</strong> {{ user.created_at.strftime('%d.%m.%Y') }}</p>
+            <p><strong>Товаров в продаже:</strong> {{ user.products|length }}</p>
+            <div class="price" style="color: #26c6da;">Баланс: {{ "%.2f"|format(user.balance) }}₽</div>
+        </div>
+        {% endfor %}
+        
+        {% if not users %}
+        <div style="grid-column: 1 / -1; text-align: center; color: #666; padding: 40px;">
+            <h3>Пользователи не найдены</h3>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

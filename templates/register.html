@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация{% endblock %}
+
+{% block content %}
+<div class="auth-center">
+    <div class="auth-card">
+        <div class="product-card">
+            <h1 class="rainbow-text">Nexus Dark</h1>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div style="color: red; text-align: center; margin: 10px;">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST">
+                <h2>Регистрация</h2>
+                
+                <input type="text" placeholder="Имя пользователя" id="username" name="username" required minlength="3">
+                <br>
+                <input type="email" placeholder="Email" id="email" name="email" required>
+                <br>
+                <input type="password" placeholder="Пароль" id="password" name="password" required minlength="6">
+                <br>
+                <input type="password" placeholder="Подтвердите праоль" id="confirm_password" name="confirm_password" required>
+                <br>
+                <button type="submit" class="button">Зарегистрироваться</button>
+                
+                <a href="{{ url_for('login') }}" class="rainbow-text-small">Войти</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
