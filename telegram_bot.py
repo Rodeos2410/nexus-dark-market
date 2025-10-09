@@ -666,27 +666,27 @@ def handle_callback_query(callback_query, chat_id):
         return "🔧 <b>Управление пользователями</b>\n\nВыберите действие:", get_management_menu()
     
     elif callback_data == 'ban_user':
-        user_states[chat_id] = 'waiting_ban_username'
+        user_states[str(chat_id)] = 'waiting_ban_username'
         return "🚫 <b>Заблокировать пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
     
     elif callback_data == 'unban_user':
-        user_states[chat_id] = 'waiting_unban_username'
+        user_states[str(chat_id)] = 'waiting_unban_username'
         return "✅ <b>Разблокировать пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
     
     elif callback_data == 'make_admin':
-        user_states[chat_id] = 'waiting_make_admin_username'
+        user_states[str(chat_id)] = 'waiting_make_admin_username'
         return "👑 <b>Сделать пользователя админом</b>\n\nВведите имя пользователя:", get_management_menu()
     
     elif callback_data == 'remove_admin':
-        user_states[chat_id] = 'waiting_remove_admin_username'
+        user_states[str(chat_id)] = 'waiting_remove_admin_username'
         return "👤 <b>Убрать админа</b>\n\nВведите имя пользователя:", get_management_menu()
     
     elif callback_data == 'delete_user':
-        user_states[chat_id] = 'waiting_delete_username'
+        user_states[str(chat_id)] = 'waiting_delete_username'
         return "🗑️ <b>Удалить пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
     
     elif callback_data == 'find_user':
-        user_states[chat_id] = 'waiting_find_username'
+        user_states[str(chat_id)] = 'waiting_find_username'
         return "🔍 <b>Найти пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
     
     elif callback_data == 'select_user':
@@ -762,13 +762,15 @@ def handle_callback_query(callback_query, chat_id):
     
     elif callback_data == 'change_admin_username':
         # Устанавливаем состояние ожидания ввода логина
-        user_states[chat_id] = 'waiting_username'
+        print(f"🔍 Устанавливаем состояние waiting_username для chat_id: {chat_id}")
+        user_states[str(chat_id)] = 'waiting_username'
+        print(f"🔍 Состояние установлено. Доступные состояния: {list(user_states.keys())}")
         text = "👤 <b>Изменение логина админа</b>\n\nВведите новый логин:"
         return text, get_admin_settings_menu()
     
     elif callback_data == 'change_admin_password':
         # Устанавливаем состояние ожидания ввода пароля
-        user_states[chat_id] = 'waiting_password'
+        user_states[str(chat_id)] = 'waiting_password'
         text = "🔒 <b>Изменение пароля админа</b>\n\nВведите новый пароль:"
         return text, get_admin_settings_menu()
     
@@ -854,14 +856,19 @@ def process_telegram_update(update):
     text = message.get('text', '')
     
     # Проверяем состояние пользователя
-    if chat_id in user_states:
-        state = user_states[chat_id]
+    print(f"🔍 Проверяем состояние для chat_id: {chat_id}")
+    print(f"🔍 Доступные состояния: {list(user_states.keys())}")
+    
+    if str(chat_id) in user_states:
+        state = user_states[str(chat_id)]
+        print(f"🔍 Найдено состояние: {state}")
         
         if state == 'waiting_username':
+            print(f"🔍 Обрабатываем ввод логина: {text}")
             # Обрабатываем ввод нового логина
             result = change_admin_username(text)
             response_text = f"{result}\n\n<b>💡 Новый логин:</b> <code>{text}</code>\n\n<b>⚠️ Сохраните логин!</b>"
-            del user_states[chat_id]  # Удаляем состояние
+            del user_states[str(chat_id)]  # Удаляем состояние
             send_telegram_message(response_text, chat_id, get_main_menu())
             return
             
@@ -869,49 +876,49 @@ def process_telegram_update(update):
             # Обрабатываем ввод нового пароля
             result = change_admin_password(text)
             response_text = f"{result}\n\n<b>💡 Новый пароль:</b> <code>{text}</code>\n\n<b>⚠️ Сохраните пароль!</b>"
-            del user_states[chat_id]  # Удаляем состояние
+            del user_states[str(chat_id)]  # Удаляем состояние
             send_telegram_message(response_text, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_ban_username':
             # Обрабатываем блокировку пользователя
             result = ban_user_by_username(text)
-            del user_states[chat_id]  # Удаляем состояние
+            del user_states[str(chat_id)]  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_unban_username':
             # Обрабатываем разблокировку пользователя
             result = unban_user_by_username(text)
-            del user_states[chat_id]  # Удаляем состояние
+            del user_states[str(chat_id)]  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_make_admin_username':
             # Обрабатываем назначение админа
             result = make_admin_by_username(text)
-            del user_states[chat_id]  # Удаляем состояние
+            del user_states[str(chat_id)]  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_remove_admin_username':
             # Обрабатываем снятие админа
             result = remove_admin_by_username(text)
-            del user_states[chat_id]  # Удаляем состояние
+            del user_states[str(chat_id)]  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_delete_username':
             # Обрабатываем удаление пользователя
             result = delete_user_by_username(text)
-            del user_states[chat_id]  # Удаляем состояние
+            del user_states[str(chat_id)]  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_find_username':
             # Обрабатываем поиск пользователя
             result = find_user_by_username(text)
-            del user_states[chat_id]  # Удаляем состояние
+            del user_states[str(chat_id)]  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
     
