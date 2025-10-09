@@ -3,10 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import os
 import json
+import random
+import string
 from config import config
 from sqlalchemy import text
 
@@ -27,6 +29,8 @@ class User(UserMixin, db.Model):
     telegram_chat_id = db.Column(db.String(50), nullable=True)  # chat_id для отправки сообщений
     is_banned = db.Column(db.Boolean, default=False)  # статус блокировки
     is_admin = db.Column(db.Boolean, default=False)  # статус администратора
+    auth_code = db.Column(db.String(6), nullable=True)  # код для двухфакторной аутентификации
+    auth_code_expires = db.Column(db.DateTime, nullable=True)  # время истечения кода
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     products = db.relationship('Product', backref='seller', lazy=True)
     cart_items = db.relationship('CartItem', backref='user', lazy=True)
@@ -174,6 +178,34 @@ def send_seller_notification(product_name: str, quantity: int, price: float, buy
     send_telegram_message(text, seller_chat_id)
 
 
+def generate_auth_code():
+    """Генерирует 6-значный код для двухфакторной аутентификации"""
+    return ''.join(random.choices(string.digits, k=6))
+
+def send_auth_code_to_telegram(user, auth_code):
+    """Отправляет код аутентификации в Telegram"""
+    if not user.telegram_chat_id:
+        return False
+    
+    message = f"🔐 <b>Код для входа в админ панель</b>\n\n"
+    message += f"👤 Пользователь: <code>{user.username}</code>\n"
+    message += f"🔢 Код: <code>{auth_code}</code>\n\n"
+    message += f"⏰ Код действителен 5 минут\n"
+    message += f"📋 Нажмите на код для копирования"
+    
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            'chat_id': user.telegram_chat_id,
+            'text': message,
+            'parse_mode': 'HTML'
+        }
+        response = requests.post(url, data=payload, timeout=5)
+        return response.status_code == 200
+    except Exception as e:
+        print(f"❌ Ошибка отправки кода в Telegram: {e}")
+        return False
+
 def ensure_schema():
     # Создаем все таблицы и добавляем колонки, если их нет
     with app.app_context():
@@ -221,9 +253,15 @@ def ensure_schema():
                     if 'is_banned' not in cols:
                         print("🔄 Adding is_banned column to user table")
                         conn.execute(text("ALTER TABLE user ADD COLUMN is_banned BOOLEAN DEFAULT 0"))
-                    if 'is_admin' not in cols:
-                        print("🔄 Adding is_admin column to user table")
-                        conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+                            if 'is_admin' not in cols:
+                                print("🔄 Adding is_admin column to user table")
+                                conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+                            if 'auth_code' not in cols:
+                                print("🔄 Adding auth_code column to user table")
+                                conn.execute(text("ALTER TABLE user ADD COLUMN auth_code VARCHAR(6)"))
+                            if 'auth_code_expires' not in cols:
+                                print("🔄 Adding auth_code_expires column to user table")
+                                conn.execute(text("ALTER TABLE user ADD COLUMN auth_code_expires DATETIME"))
                 except Exception as e:
                     print(f"⚠️ User table check failed: {e}")
             
@@ -265,22 +303,75 @@ def market():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('market'))
+    
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        if not username or not password:
-            flash('Пожалуйста, заполните все поля')
-            return render_template('login.html')
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password_hash, password):
-            if user.is_banned:
-                flash('Ваш аккаунт заблокирован. Обратитесь к администратору.')
+        # Проверяем, есть ли код в запросе (вторая стадия аутентификации)
+        auth_code = request.form.get('auth_code', '').strip()
+        
+        if auth_code:
+            # Вторая стадия - проверка кода
+            username = request.form.get('username', '').strip()
+            user = User.query.filter_by(username=username).first()
+            
+            if user and user.auth_code and user.auth_code_expires:
+                # Проверяем, не истек ли код
+                if datetime.utcnow() <= user.auth_code_expires:
+                    if user.auth_code == auth_code:
+                        # Код верный, входим в систему
+                        if user.is_banned:
+                            flash('Ваш аккаунт заблокирован. Обратитесь к администратору.')
+                        else:
+                            # Очищаем код после успешного входа
+                            user.auth_code = None
+                            user.auth_code_expires = None
+                            db.session.commit()
+                            
+                            login_user(user)
+                            next_page = request.args.get('next')
+                            return redirect(next_page) if next_page else redirect(url_for('market'))
+                    else:
+                        flash('Неверный код аутентификации')
+                else:
+                    flash('Код аутентификации истек. Попробуйте войти заново.')
+                    # Очищаем истекший код
+                    user.auth_code = None
+                    user.auth_code_expires = None
+                    db.session.commit()
             else:
-                login_user(user)
-                next_page = request.args.get('next')
-                return redirect(next_page) if next_page else redirect(url_for('market'))
+                flash('Код аутентификации не найден. Попробуйте войти заново.')
         else:
-            flash('Неверное имя пользователя или пароль')
+            # Первая стадия - проверка логина и пароля
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '')
+            
+            if not username or not password:
+                flash('Пожалуйста, заполните все поля')
+                return render_template('login.html')
+            
+            user = User.query.filter_by(username=username).first()
+            if user and check_password_hash(user.password_hash, password):
+                if user.is_banned:
+                    flash('Ваш аккаунт заблокирован. Обратитесь к администратору.')
+                else:
+                    # Генерируем код и отправляем в Telegram
+                    auth_code = generate_auth_code()
+                    user.auth_code = auth_code
+                    user.auth_code_expires = datetime.utcnow() + timedelta(minutes=5)
+                    db.session.commit()
+                    
+                    # Отправляем код в Telegram
+                    if send_auth_code_to_telegram(user, auth_code):
+                        flash('Код аутентификации отправлен в Telegram. Введите его ниже.')
+                        return render_template('login.html', show_code_input=True, username=username)
+                    else:
+                        flash('Ошибка отправки кода в Telegram. Проверьте настройки уведомлений.')
+                        # Очищаем код при ошибке отправки
+                        user.auth_code = None
+                        user.auth_code_expires = None
+                        db.session.commit()
+            else:
+                flash('Неверное имя пользователя или пароль')
+    
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -1137,16 +1228,17 @@ if __name__ == '__main__':
         ensure_schema()
         if User.query.count() == 0:
             admin = User(
-                username='admin',
-                email='admin@nexus.dark',
-                password_hash=generate_password_hash('admin123'),
+                username='Rodeos',
+                email='rodeos@nexus.dark',
+                password_hash=generate_password_hash('Rodeos24102007'),
                 balance=10000.0,
                 is_admin=True,
-                is_banned=False
+                is_banned=False,
+                telegram_chat_id='1172834372'  # ID для отправки кодов
             )
             db.session.add(admin)
             db.session.commit()
-            print('Создан администратор: admin/admin123')
+            print('Создан администратор: Rodeos/Rodeos24102007')
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))

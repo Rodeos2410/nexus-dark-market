@@ -19,13 +19,35 @@
             <form method="POST">
                 <h2>Вход</h2>
                 
-                <input type="text" placeholder="Имя пользователя" id="username" name="username" required>
+                <input type="text" placeholder="Имя пользователя" id="username" name="username" 
+                       value="{{ username if username else '' }}" required>
                 
+                {% if not show_code_input %}
                 <input type="password" placeholder="Пароль" id="password" name="password" required>
-                <br>
-                <button type="submit" class="button">Войти</button>
+                {% else %}
+                <input type="password" placeholder="Пароль" id="password" name="password" 
+                       value="***" readonly style="background-color: #f0f0f0;">
+                {% endif %}
                 
+                {% if show_code_input %}
+                <div style="margin: 15px 0; padding: 10px; background-color: #e8f5e8; border-radius: 5px; text-align: center;">
+                    <p style="margin: 0; color: #2d5a2d; font-weight: bold;">📱 Код отправлен в Telegram</p>
+                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9em;">Проверьте сообщения от бота</p>
+                </div>
+                <input type="text" placeholder="Введите 6-значный код" id="auth_code" name="auth_code" 
+                       maxlength="6" pattern="[0-9]{6}" required style="text-align: center; font-size: 1.2em; letter-spacing: 2px;">
+                {% endif %}
+                
+                <br>
+                <button type="submit" class="button">
+                    {% if show_code_input %}Подтвердить код{% else %}Войти{% endif %}
+                </button>
+                
+                {% if not show_code_input %}
                 <a href="{{ url_for('register') }}" class="rainbow-text-small">Регистрация</a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="rainbow-text-small">Назад к входу</a>
+                {% endif %}
             </form>
         </div>
     </div>
