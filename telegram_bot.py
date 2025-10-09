@@ -10,8 +10,23 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8458514538:AAFIAT7BrKelIHi
 ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID', '1172834372')
 BASE_URL = 'https://api.telegram.org/bot'
 
-# Состояния пользователей для ввода данных
+# Состояния пользователей для ввода данных (временно в памяти)
 user_states = {}
+
+def get_user_state(chat_id):
+    """Получает состояние пользователя"""
+    return user_states.get(str(chat_id))
+
+def set_user_state(chat_id, state):
+    """Устанавливает состояние пользователя"""
+    user_states[str(chat_id)] = state
+    print(f"🔍 Установлено состояние {state} для chat_id: {chat_id}")
+
+def clear_user_state(chat_id):
+    """Очищает состояние пользователя"""
+    if str(chat_id) in user_states:
+        del user_states[str(chat_id)]
+        print(f"🔍 Очищено состояние для chat_id: {chat_id}")
 
 def create_inline_keyboard(buttons):
     """Создает inline клавиатуру с кнопками"""
@@ -762,9 +777,7 @@ def handle_callback_query(callback_query, chat_id):
     
     elif callback_data == 'change_admin_username':
         # Устанавливаем состояние ожидания ввода логина
-        print(f"🔍 Устанавливаем состояние waiting_username для chat_id: {chat_id}")
-        user_states[str(chat_id)] = 'waiting_username'
-        print(f"🔍 Состояние установлено. Доступные состояния: {list(user_states.keys())}")
+        set_user_state(chat_id, 'waiting_username')
         text = "👤 <b>Изменение логина админа</b>\n\nВведите новый логин:"
         return text, get_admin_settings_menu()
     
@@ -856,19 +869,16 @@ def process_telegram_update(update):
     text = message.get('text', '')
     
     # Проверяем состояние пользователя
-    print(f"🔍 Проверяем состояние для chat_id: {chat_id}")
-    print(f"🔍 Доступные состояния: {list(user_states.keys())}")
+    state = get_user_state(chat_id)
+    print(f"🔍 Проверяем состояние для chat_id: {chat_id}, состояние: {state}")
     
-    if str(chat_id) in user_states:
-        state = user_states[str(chat_id)]
-        print(f"🔍 Найдено состояние: {state}")
-        
+    if state:
         if state == 'waiting_username':
             print(f"🔍 Обрабатываем ввод логина: {text}")
             # Обрабатываем ввод нового логина
             result = change_admin_username(text)
             response_text = f"{result}\n\n<b>💡 Новый логин:</b> <code>{text}</code>\n\n<b>⚠️ Сохраните логин!</b>"
-            del user_states[str(chat_id)]  # Удаляем состояние
+            clear_user_state(chat_id)  # Удаляем состояние
             send_telegram_message(response_text, chat_id, get_main_menu())
             return
             
@@ -876,49 +886,49 @@ def process_telegram_update(update):
             # Обрабатываем ввод нового пароля
             result = change_admin_password(text)
             response_text = f"{result}\n\n<b>💡 Новый пароль:</b> <code>{text}</code>\n\n<b>⚠️ Сохраните пароль!</b>"
-            del user_states[str(chat_id)]  # Удаляем состояние
+            clear_user_state(chat_id)  # Удаляем состояние
             send_telegram_message(response_text, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_ban_username':
             # Обрабатываем блокировку пользователя
             result = ban_user_by_username(text)
-            del user_states[str(chat_id)]  # Удаляем состояние
+            clear_user_state(chat_id)  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_unban_username':
             # Обрабатываем разблокировку пользователя
             result = unban_user_by_username(text)
-            del user_states[str(chat_id)]  # Удаляем состояние
+            clear_user_state(chat_id)  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_make_admin_username':
             # Обрабатываем назначение админа
             result = make_admin_by_username(text)
-            del user_states[str(chat_id)]  # Удаляем состояние
+            clear_user_state(chat_id)  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_remove_admin_username':
             # Обрабатываем снятие админа
             result = remove_admin_by_username(text)
-            del user_states[str(chat_id)]  # Удаляем состояние
+            clear_user_state(chat_id)  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_delete_username':
             # Обрабатываем удаление пользователя
             result = delete_user_by_username(text)
-            del user_states[str(chat_id)]  # Удаляем состояние
+            clear_user_state(chat_id)  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
         elif state == 'waiting_find_username':
             # Обрабатываем поиск пользователя
             result = find_user_by_username(text)
-            del user_states[str(chat_id)]  # Удаляем состояние
+            clear_user_state(chat_id)  # Удаляем состояние
             send_telegram_message(result, chat_id, get_main_menu())
             return
     
