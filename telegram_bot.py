@@ -920,81 +920,8 @@ def process_telegram_update(update):
         response_text, keyboard = handle_admin_command(text, chat_id)
         send_telegram_message(response_text, chat_id, keyboard)
     else:
-        # Обработка специальных команд управления пользователями
-        parts = text.split()
-        if len(parts) >= 2:
-            action = parts[0]
-            username_or_id = parts[1]
-            
-            # Проверяем, является ли второй параметр числом (ID) или строкой (имя)
-            try:
-                user_id = int(username_or_id)
-                # Это ID пользователя
-                if action == 'ban_user':
-                    response_text = ban_user(user_id)
-                elif action == 'unban_user':
-                    response_text = unban_user(user_id)
-                elif action == 'make_admin':
-                    response_text = make_admin(user_id)
-                elif action == 'remove_admin':
-                    response_text = remove_admin(user_id)
-                elif action == 'delete_user':
-                    response_text = delete_user_admin(user_id)
-                elif action == 'setup_telegram' and len(parts) >= 3:
-                    chat_id_param = parts[2]
-                    response_text = setup_telegram_chat(user_id, chat_id_param)
-                else:
-                    response_text = "❌ Неизвестная команда"
-            except ValueError:
-                # Это имя пользователя
-                username = username_or_id
-                if action == 'ban':
-                    response_text = ban_user_by_username(username)
-                elif action == 'unban':
-                    response_text = unban_user_by_username(username)
-                elif action == 'admin':
-                    response_text = make_admin_by_username(username)
-                elif action == 'remove_admin':
-                    response_text = remove_admin_by_username(username)
-                elif action == 'delete':
-                    user = get_user_by_username(username)
-                    if user:
-                        response_text = delete_user_admin(user.id)
-                    else:
-                        response_text = f"❌ Пользователь '{username}' не найден"
-                elif action == 'find':
-                    user = get_user_by_username(username)
-                    if user:
-                        status = []
-                        if user.is_admin:
-                            status.append("👑 Админ")
-                        if user.is_banned:
-                            status.append("🚫 Заблокирован")
-                        if not user.is_banned:
-                            status.append("✅ Активен")
-                        
-                        telegram_status = "📱 Настроен" if user.telegram_chat_id else "⚠️ Не настроен"
-                        
-                        response_text = f"""🔍 <b>Найден пользователь</b>
-
-<b>Имя:</b> {user.username}
-<b>Email:</b> {user.email}
-<b>ID:</b> {user.id}
-<b>Баланс:</b> {user.balance}₽
-<b>Telegram:</b> {f'@{user.telegram_username}' if user.telegram_username else 'Не указан'} ({telegram_status})
-<b>Статус:</b> {" | ".join(status)}
-<b>Регистрация:</b> {user.created_at.strftime('%d.%m.%Y %H:%M')}
-
-<b>💡 Скопируйте имя:</b> <code>{user.username}</code>"""
-                    else:
-                        response_text = f"❌ Пользователь '{username}' не найден"
-                else:
-                    response_text = "❌ Неизвестная команда"
-            
-            send_telegram_message(response_text, chat_id, get_main_menu())
-        else:
-            # Показываем главное меню для любых других сообщений
-            send_telegram_message("🔧 <b>Админ панель</b>\n\nВыберите действие:", chat_id, get_main_menu())
+        # Если это не команда и нет активного состояния, показываем главное меню
+        send_telegram_message("🔧 <b>Админ панель</b>\n\nВыберите действие:", chat_id, get_main_menu())
 
 if __name__ == "__main__":
     print("🤖 Telegram бот запущен!")
