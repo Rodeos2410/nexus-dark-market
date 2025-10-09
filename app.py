@@ -182,38 +182,50 @@ def ensure_schema():
             print("🔄 Creating database tables...")
             db.create_all()
             
+            # Для PostgreSQL используем другой подход
             conn = db.engine.connect()
             
-            # Проверяем таблицу product
-            try:
-                res = conn.execute(text("PRAGMA table_info(product)"))
-                cols = [row[1] for row in res]
-                if 'stock' not in cols:
-                    print("🔄 Adding stock column to product table")
-                    conn.execute(text("ALTER TABLE product ADD COLUMN stock INTEGER DEFAULT 0"))
-            except Exception as e:
-                print(f"⚠️ Product table check failed: {e}")
+            # Проверяем, какая база данных используется
+            db_type = db.engine.url.drivername
             
-            # Проверяем таблицу user
-            try:
-                res = conn.execute(text("PRAGMA table_info(user)"))
-                cols = [row[1] for row in res]
-                print(f"📋 Current user table columns: {cols}")
+            if 'postgresql' in db_type:
+                print("🗄️ Using PostgreSQL - skipping column checks (tables created by SQLAlchemy)")
+                # Для PostgreSQL SQLAlchemy создает все колонки автоматически
+                pass
+            else:
+                # Для SQLite используем PRAGMA
+                print("🗄️ Using SQLite - checking columns")
                 
-                if 'telegram_username' not in cols:
-                    print("🔄 Adding telegram_username column to user table")
-                    conn.execute(text("ALTER TABLE user ADD COLUMN telegram_username VARCHAR(100)"))
-                if 'telegram_chat_id' not in cols:
-                    print("🔄 Adding telegram_chat_id column to user table")
-                    conn.execute(text("ALTER TABLE user ADD COLUMN telegram_chat_id VARCHAR(50)"))
-                if 'is_banned' not in cols:
-                    print("🔄 Adding is_banned column to user table")
-                    conn.execute(text("ALTER TABLE user ADD COLUMN is_banned BOOLEAN DEFAULT 0"))
-                if 'is_admin' not in cols:
-                    print("🔄 Adding is_admin column to user table")
-                    conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
-            except Exception as e:
-                print(f"⚠️ User table check failed: {e}")
+                # Проверяем таблицу product
+                try:
+                    res = conn.execute(text("PRAGMA table_info(product)"))
+                    cols = [row[1] for row in res]
+                    if 'stock' not in cols:
+                        print("🔄 Adding stock column to product table")
+                        conn.execute(text("ALTER TABLE product ADD COLUMN stock INTEGER DEFAULT 0"))
+                except Exception as e:
+                    print(f"⚠️ Product table check failed: {e}")
+                
+                # Проверяем таблицу user
+                try:
+                    res = conn.execute(text("PRAGMA table_info(user)"))
+                    cols = [row[1] for row in res]
+                    print(f"📋 Current user table columns: {cols}")
+                    
+                    if 'telegram_username' not in cols:
+                        print("🔄 Adding telegram_username column to user table")
+                        conn.execute(text("ALTER TABLE user ADD COLUMN telegram_username VARCHAR(100)"))
+                    if 'telegram_chat_id' not in cols:
+                        print("🔄 Adding telegram_chat_id column to user table")
+                        conn.execute(text("ALTER TABLE user ADD COLUMN telegram_chat_id VARCHAR(50)"))
+                    if 'is_banned' not in cols:
+                        print("🔄 Adding is_banned column to user table")
+                        conn.execute(text("ALTER TABLE user ADD COLUMN is_banned BOOLEAN DEFAULT 0"))
+                    if 'is_admin' not in cols:
+                        print("🔄 Adding is_admin column to user table")
+                        conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+                except Exception as e:
+                    print(f"⚠️ User table check failed: {e}")
             
             conn.commit()
             conn.close()
