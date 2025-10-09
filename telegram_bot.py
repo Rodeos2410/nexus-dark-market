@@ -781,6 +781,7 @@ def handle_callback_query(callback_query, chat_id):
         # Устанавливаем состояние ожидания ввода логина
         set_user_state(chat_id, 'waiting_username')
         text = "👤 <b>Изменение логина админа</b>\n\nВведите новый логин:"
+        print(f"🔍 Callback обработан, состояние установлено: {get_user_state(chat_id)}")
         return text, get_admin_settings_menu()
     
     elif callback_data == 'change_admin_password':
@@ -880,8 +881,10 @@ def process_telegram_update(update):
             # Обрабатываем ввод нового логина
             result = change_admin_username(text)
             response_text = f"{result}\n\n<b>💡 Новый логин:</b> <code>{text}</code>\n\n<b>⚠️ Сохраните логин!</b>"
+            print(f"🔍 Отправляем сообщение: {response_text}")
             clear_user_state(chat_id)  # Удаляем состояние
-            send_telegram_message(response_text, chat_id, get_main_menu())
+            response = send_telegram_message(response_text, chat_id, get_main_menu())
+            print(f"🔍 Ответ от send_telegram_message: {response}")
             return
             
         elif state == 'waiting_password':
