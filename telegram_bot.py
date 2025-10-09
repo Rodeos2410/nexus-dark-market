@@ -10,6 +10,9 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8458514538:AAFIAT7BrKelIHi
 ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID', '1172834372')
 BASE_URL = 'https://api.telegram.org/bot'
 
+# Состояния пользователей для ввода данных
+user_states = {}
+
 def create_inline_keyboard(buttons):
     """Создает inline клавиатуру с кнопками"""
     keyboard = []
@@ -301,6 +304,90 @@ def change_admin_password(new_password):
             return f"✅ Пароль админа изменен"
         return "❌ Админ не найден"
 
+def ban_user_by_username(username):
+    """Блокирует пользователя по имени"""
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        if user:
+            user.is_banned = True
+            db.session.commit()
+            return f"✅ Пользователь '{username}' заблокирован"
+        else:
+            return f"❌ Пользователь '{username}' не найден"
+
+def unban_user_by_username(username):
+    """Разблокирует пользователя по имени"""
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        if user:
+            user.is_banned = False
+            db.session.commit()
+            return f"✅ Пользователь '{username}' разблокирован"
+        else:
+            return f"❌ Пользователь '{username}' не найден"
+
+def make_admin_by_username(username):
+    """Делает пользователя админом по имени"""
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        if user:
+            user.is_admin = True
+            db.session.commit()
+            return f"✅ Пользователь '{username}' назначен админом"
+        else:
+            return f"❌ Пользователь '{username}' не найден"
+
+def remove_admin_by_username(username):
+    """Убирает админа по имени"""
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        if user:
+            user.is_admin = False
+            db.session.commit()
+            return f"✅ Пользователь '{username}' больше не админ"
+        else:
+            return f"❌ Пользователь '{username}' не найден"
+
+def delete_user_by_username(username):
+    """Удаляет пользователя по имени"""
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            return f"✅ Пользователь '{username}' удален"
+        else:
+            return f"❌ Пользователь '{username}' не найден"
+
+def find_user_by_username(username):
+    """Находит пользователя по имени"""
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        if user:
+            status = []
+            if user.is_admin:
+                status.append("👑 Админ")
+            if user.is_banned:
+                status.append("🚫 Заблокирован")
+            if not status:
+                status.append("👤 Пользователь")
+            
+            telegram_status = "✅ Настроен" if user.telegram_chat_id else "❌ Не настроен"
+            
+            text = f"""🔍 <b>Информация о пользователе</b>
+
+<b>ID:</b> {user.id}
+<b>Имя:</b> {user.username}
+<b>Email:</b> {user.email}
+<b>Telegram:</b> {f'@{user.telegram_username}' if user.telegram_username else 'Не указан'} ({telegram_status})
+<b>Статус:</b> {" | ".join(status)}
+<b>Регистрация:</b> {user.created_at.strftime('%d.%m.%Y %H:%M')}
+
+<b>💡 Скопируйте имя:</b> <code>{user.username}</code>"""
+            return text
+        else:
+            return f"❌ Пользователь '{username}' не найден"
+
 def get_admin_info():
     """Получает информацию об админе"""
     with app.app_context():
@@ -344,7 +431,15 @@ def get_management_menu():
             {'text': '🔍 Найти по имени', 'callback_data': 'find_user'}
         ],
         [
-            {'text': '📝 Ввести команду', 'callback_data': 'enter_command'}
+            {'text': '🚫 Заблокировать', 'callback_data': 'ban_user'},
+            {'text': '✅ Разблокировать', 'callback_data': 'unban_user'}
+        ],
+        [
+            {'text': '👑 Сделать админом', 'callback_data': 'make_admin'},
+            {'text': '👤 Убрать админа', 'callback_data': 'remove_admin'}
+        ],
+        [
+            {'text': '🗑️ Удалить пользователя', 'callback_data': 'delete_user'}
         ],
         [
             {'text': '🔙 Назад', 'callback_data': 'main_menu'}
@@ -570,6 +665,30 @@ def handle_callback_query(callback_query, chat_id):
     elif callback_data == 'management':
         return "🔧 <b>Управление пользователями</b>\n\nВыберите действие:", get_management_menu()
     
+    elif callback_data == 'ban_user':
+        user_states[chat_id] = 'waiting_ban_username'
+        return "🚫 <b>Заблокировать пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
+    
+    elif callback_data == 'unban_user':
+        user_states[chat_id] = 'waiting_unban_username'
+        return "✅ <b>Разблокировать пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
+    
+    elif callback_data == 'make_admin':
+        user_states[chat_id] = 'waiting_make_admin_username'
+        return "👑 <b>Сделать пользователя админом</b>\n\nВведите имя пользователя:", get_management_menu()
+    
+    elif callback_data == 'remove_admin':
+        user_states[chat_id] = 'waiting_remove_admin_username'
+        return "👤 <b>Убрать админа</b>\n\nВведите имя пользователя:", get_management_menu()
+    
+    elif callback_data == 'delete_user':
+        user_states[chat_id] = 'waiting_delete_username'
+        return "🗑️ <b>Удалить пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
+    
+    elif callback_data == 'find_user':
+        user_states[chat_id] = 'waiting_find_username'
+        return "🔍 <b>Найти пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
+    
     elif callback_data == 'select_user':
         return "👥 <b>Выберите пользователя</b>\n\nНажмите на пользователя для управления:", get_user_management_buttons()
     
@@ -642,15 +761,15 @@ def handle_callback_query(callback_query, chat_id):
         return "⚙️ <b>Настройки админа</b>\n\nВыберите действие:", get_admin_settings_menu()
     
     elif callback_data == 'change_admin_username':
-        new_username = "admin" + str(int(time.time()))[-4:]  # Генерируем уникальный логин
-        result = change_admin_username(new_username)
-        text = f"{result}\n\n<b>💡 Новый логин:</b> <code>{new_username}</code>\n\n<b>⚠️ Сохраните логин!</b>"
+        # Устанавливаем состояние ожидания ввода логина
+        user_states[chat_id] = 'waiting_username'
+        text = "👤 <b>Изменение логина админа</b>\n\nВведите новый логин:"
         return text, get_admin_settings_menu()
     
     elif callback_data == 'change_admin_password':
-        new_password = "pass" + str(int(time.time()))[-6:]  # Генерируем уникальный пароль
-        result = change_admin_password(new_password)
-        text = f"{result}\n\n<b>💡 Новый пароль:</b> <code>{new_password}</code>\n\n<b>⚠️ Сохраните пароль!</b>"
+        # Устанавливаем состояние ожидания ввода пароля
+        user_states[chat_id] = 'waiting_password'
+        text = "🔒 <b>Изменение пароля админа</b>\n\nВведите новый пароль:"
         return text, get_admin_settings_menu()
     
     elif callback_data == 'admin_info':
@@ -689,15 +808,21 @@ def handle_callback_query(callback_query, chat_id):
 Настройка Telegram для пользователей
 
 ⚙️ <b>Настройки админа:</b>
-• Изменение логина админа (автоматическая генерация)
-• Изменение пароля админа (автоматическая генерация)
+• Изменение логина админа (ввод вручную)
+• Изменение пароля админа (ввод вручную)
 • Информация об админе
+
+🔧 <b>Управление пользователями:</b>
+• Заблокировать/разблокировать
+• Назначить/убрать админа
+• Удалить пользователя
+• Найти пользователя
 
 ❓ <b>Помощь:</b>
 Показать эту справку
 
-<b>💡 Все действия выполняются через кнопки!</b>
-Никаких команд вводить не нужно."""
+<b>💡 Все действия через кнопки!</b>
+После нажатия кнопки просто введите данные."""
         return text, get_main_menu()
     
     else:
@@ -727,6 +852,68 @@ def process_telegram_update(update):
     message = update['message']
     chat_id = str(message['chat']['id'])
     text = message.get('text', '')
+    
+    # Проверяем состояние пользователя
+    if chat_id in user_states:
+        state = user_states[chat_id]
+        
+        if state == 'waiting_username':
+            # Обрабатываем ввод нового логина
+            result = change_admin_username(text)
+            response_text = f"{result}\n\n<b>💡 Новый логин:</b> <code>{text}</code>\n\n<b>⚠️ Сохраните логин!</b>"
+            del user_states[chat_id]  # Удаляем состояние
+            send_telegram_message(response_text, chat_id, get_main_menu())
+            return
+            
+        elif state == 'waiting_password':
+            # Обрабатываем ввод нового пароля
+            result = change_admin_password(text)
+            response_text = f"{result}\n\n<b>💡 Новый пароль:</b> <code>{text}</code>\n\n<b>⚠️ Сохраните пароль!</b>"
+            del user_states[chat_id]  # Удаляем состояние
+            send_telegram_message(response_text, chat_id, get_main_menu())
+            return
+            
+        elif state == 'waiting_ban_username':
+            # Обрабатываем блокировку пользователя
+            result = ban_user_by_username(text)
+            del user_states[chat_id]  # Удаляем состояние
+            send_telegram_message(result, chat_id, get_main_menu())
+            return
+            
+        elif state == 'waiting_unban_username':
+            # Обрабатываем разблокировку пользователя
+            result = unban_user_by_username(text)
+            del user_states[chat_id]  # Удаляем состояние
+            send_telegram_message(result, chat_id, get_main_menu())
+            return
+            
+        elif state == 'waiting_make_admin_username':
+            # Обрабатываем назначение админа
+            result = make_admin_by_username(text)
+            del user_states[chat_id]  # Удаляем состояние
+            send_telegram_message(result, chat_id, get_main_menu())
+            return
+            
+        elif state == 'waiting_remove_admin_username':
+            # Обрабатываем снятие админа
+            result = remove_admin_by_username(text)
+            del user_states[chat_id]  # Удаляем состояние
+            send_telegram_message(result, chat_id, get_main_menu())
+            return
+            
+        elif state == 'waiting_delete_username':
+            # Обрабатываем удаление пользователя
+            result = delete_user_by_username(text)
+            del user_states[chat_id]  # Удаляем состояние
+            send_telegram_message(result, chat_id, get_main_menu())
+            return
+            
+        elif state == 'waiting_find_username':
+            # Обрабатываем поиск пользователя
+            result = find_user_by_username(text)
+            del user_states[chat_id]  # Удаляем состояние
+            send_telegram_message(result, chat_id, get_main_menu())
+            return
     
     # Обрабатываем команды и сообщения
     if text.startswith('/') or text in ['start', 'menu', 'help']:
