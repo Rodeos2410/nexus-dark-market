@@ -395,6 +395,10 @@ def get_admin_settings_menu():
     """Возвращает меню настроек админа"""
     buttons = [
         [
+            {'text': '👤 Изменить логин', 'callback_data': 'change_admin_username'},
+            {'text': '🔒 Изменить пароль', 'callback_data': 'change_admin_password'}
+        ],
+        [
             {'text': 'ℹ️ Информация об админе', 'callback_data': 'admin_info'}
         ],
         [
@@ -636,6 +640,11 @@ def handle_callback_query(callback_query, chat_id):
     elif callback_data == 'admin_settings':
         return "⚙️ <b>Настройки админа</b>\n\nВыберите действие:", get_admin_settings_menu()
     
+    elif callback_data == 'change_admin_username':
+        return "👤 <b>Изменение логина админа</b>\n\nВведите новый логин в формате:\n\n<code>change_username новый_логин</code>\n\nНапример: <code>change_username newadmin</code>", get_admin_settings_menu()
+    
+    elif callback_data == 'change_admin_password':
+        return "🔒 <b>Изменение пароля админа</b>\n\nВведите новый пароль в формате:\n\n<code>change_password новый_пароль</code>\n\nНапример: <code>change_password newpassword123</code>", get_admin_settings_menu()
     
     elif callback_data == 'admin_info':
         admin_info = get_admin_info()
@@ -673,13 +682,18 @@ def handle_callback_query(callback_query, chat_id):
 Настройка Telegram для пользователей
 
 ⚙️ <b>Настройки админа:</b>
+• Изменение логина админа
+• Изменение пароля админа
 • Информация об админе
 
 ❓ <b>Помощь:</b>
 Показать эту справку
 
-<b>💡 Все действия выполняются через кнопки!</b>
-Никаких команд вводить не нужно."""
+<b>📝 Команды для изменения:</b>
+• <code>change_username новый_логин</code> - изменить логин
+• <code>change_password новый_пароль</code> - изменить пароль
+
+<b>💡 Все остальные действия через кнопки!</b>"""
         return text, get_main_menu()
     
     else:
@@ -783,6 +797,12 @@ def process_telegram_update(update):
 <b>💡 Скопируйте имя:</b> <code>{user.username}</code>"""
                     else:
                         response_text = f"❌ Пользователь '{username}' не найден"
+                elif action == 'change_username':
+                    new_username = username
+                    response_text = change_admin_username(new_username)
+                elif action == 'change_password':
+                    new_password = username
+                    response_text = change_admin_password(new_password)
                 else:
                     response_text = "❌ Неизвестная команда"
             
