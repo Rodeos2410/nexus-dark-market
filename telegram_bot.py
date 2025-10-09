@@ -1,8 +1,6 @@
 import requests
 import json
 import os
-import random
-import string
 from app import app, db, User, Product, CartItem
 from datetime import datetime
 
@@ -316,23 +314,6 @@ def get_admin_info():
             }
         return None
 
-def generate_random_username():
-    """Генерирует случайный логин"""
-    adjectives = ['super', 'mega', 'ultra', 'pro', 'master', 'elite', 'prime', 'vip']
-    nouns = ['admin', 'user', 'boss', 'chief', 'leader', 'king', 'lord', 'hero']
-    numbers = random.randint(100, 999)
-    
-    adjective = random.choice(adjectives)
-    noun = random.choice(nouns)
-    
-    return f"{adjective}{noun}{numbers}"
-
-def generate_random_password():
-    """Генерирует случайный пароль"""
-    length = 12
-    characters = string.ascii_letters + string.digits + "!@#$%^&*"
-    password = ''.join(random.choice(characters) for _ in range(length))
-    return password
 
 def get_main_menu():
     """Возвращает главное меню с кнопками"""
@@ -414,40 +395,10 @@ def get_admin_settings_menu():
     """Возвращает меню настроек админа"""
     buttons = [
         [
-            {'text': '👤 Изменить логин', 'callback_data': 'admin_username_menu'},
-            {'text': '🔒 Изменить пароль', 'callback_data': 'admin_password_menu'}
-        ],
-        [
             {'text': 'ℹ️ Информация об админе', 'callback_data': 'admin_info'}
         ],
         [
             {'text': '🔙 Назад', 'callback_data': 'main_menu'}
-        ]
-    ]
-    return create_inline_keyboard(buttons)
-
-def get_admin_username_menu():
-    """Возвращает меню изменения логина админа"""
-    buttons = [
-        [
-            {'text': '🎲 Сгенерировать случайный', 'callback_data': 'generate_random_username'},
-            {'text': '📝 Ввести вручную', 'callback_data': 'enter_username_manual'}
-        ],
-        [
-            {'text': '🔙 Назад к настройкам', 'callback_data': 'admin_settings'}
-        ]
-    ]
-    return create_inline_keyboard(buttons)
-
-def get_admin_password_menu():
-    """Возвращает меню изменения пароля админа"""
-    buttons = [
-        [
-            {'text': '🎲 Сгенерировать случайный', 'callback_data': 'generate_random_password'},
-            {'text': '📝 Ввести вручную', 'callback_data': 'enter_password_manual'}
-        ],
-        [
-            {'text': '🔙 Назад к настройкам', 'callback_data': 'admin_settings'}
         ]
     ]
     return create_inline_keyboard(buttons)
@@ -685,29 +636,6 @@ def handle_callback_query(callback_query, chat_id):
     elif callback_data == 'admin_settings':
         return "⚙️ <b>Настройки админа</b>\n\nВыберите действие:", get_admin_settings_menu()
     
-    elif callback_data == 'admin_username_menu':
-        return "👤 <b>Изменение логина админа</b>\n\nВыберите способ изменения логина:", get_admin_username_menu()
-    
-    elif callback_data == 'admin_password_menu':
-        return "🔒 <b>Изменение пароля админа</b>\n\nВыберите способ изменения пароля:", get_admin_password_menu()
-    
-    elif callback_data == 'generate_random_username':
-        new_username = generate_random_username()
-        result = change_admin_username(new_username)
-        text = f"{result}\n\n<b>💡 Новый логин:</b> <code>{new_username}</code>\n\n<b>⚠️ Сохраните логин!</b>"
-        return text, get_admin_settings_menu()
-    
-    elif callback_data == 'generate_random_password':
-        new_password = generate_random_password()
-        result = change_admin_password(new_password)
-        text = f"{result}\n\n<b>💡 Новый пароль:</b> <code>{new_password}</code>\n\n<b>⚠️ Сохраните пароль!</b>"
-        return text, get_admin_settings_menu()
-    
-    elif callback_data == 'enter_username_manual':
-        return "📝 <b>Ввод логина вручную</b>\n\nВведите новый логин в формате:\n\n<code>change_username новый_логин</code>\n\nНапример: <code>change_username newadmin</code>", get_admin_username_menu()
-    
-    elif callback_data == 'enter_password_manual':
-        return "📝 <b>Ввод пароля вручную</b>\n\nВведите новый пароль в формате:\n\n<code>change_password новый_пароль</code>\n\nНапример: <code>change_password newpassword123</code>", get_admin_password_menu()
     
     elif callback_data == 'admin_info':
         admin_info = get_admin_info()
@@ -745,8 +673,6 @@ def handle_callback_query(callback_query, chat_id):
 Настройка Telegram для пользователей
 
 ⚙️ <b>Настройки админа:</b>
-• Изменение логина админа (случайный или вручную)
-• Изменение пароля админа (случайный или вручную)
 • Информация об админе
 
 ❓ <b>Помощь:</b>
@@ -857,12 +783,6 @@ def process_telegram_update(update):
 <b>💡 Скопируйте имя:</b> <code>{user.username}</code>"""
                     else:
                         response_text = f"❌ Пользователь '{username}' не найден"
-                elif action == 'change_username':
-                    new_username = username
-                    response_text = change_admin_username(new_username)
-                elif action == 'change_password':
-                    new_password = username
-                    response_text = change_admin_password(new_password)
                 else:
                     response_text = "❌ Неизвестная команда"
             
