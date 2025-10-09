@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 import requests
 import os
+import json
 from config import config
 from sqlalchemy import text
 
@@ -73,10 +74,10 @@ def create_app(config_name='default'):
 app = create_app()
 
 # === Telegram уведомления ===
-TELEGRAM_BOT_TOKEN = '8458514538:AAFIAT7BrKelIHie9-JscBnOlAFd_V2qyMY'
-TELEGRAM_CHAT_ID = '1172834372'  # ID админа для уведомлений
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8458514538:AAFIAT7BrKelIHie9-JscBnOlAFd_V2qyMY')
+TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1172834372')  # ID админа для уведомлений
 
-def send_telegram_message(text: str, chat_id: str = None) -> None:
+def send_telegram_message(text: str, chat_id: str = None, keyboard: dict = None) -> None:
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
@@ -84,6 +85,11 @@ def send_telegram_message(text: str, chat_id: str = None) -> None:
             'text': text,
             'parse_mode': 'HTML'
         }
+        
+        # Добавляем клавиатуру, если она есть
+        if keyboard:
+            payload['reply_markup'] = json.dumps(keyboard)
+        
         # Не блокируем основной поток: таймаути короткие
         response = requests.post(url, data=payload, timeout=5)
         if not response.json().get('ok'):
@@ -92,6 +98,44 @@ def send_telegram_message(text: str, chat_id: str = None) -> None:
         # Игнорируем ошибки уведомлений, чтобы не ломать покупку
         print(f"Telegram send error: {e}")
         pass
+
+def edit_telegram_message(text: str, chat_id: str, message_id: int, keyboard: dict = None) -> None:
+    """Редактирует сообщение в Telegram"""
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText"
+        payload = {
+            'chat_id': chat_id,
+            'message_id': message_id,
+            'text': text,
+            'parse_mode': 'HTML'
+        }
+        
+        # Добавляем клавиатуру, если она есть
+        if keyboard:
+            payload['reply_markup'] = json.dumps(keyboard)
+        
+        response = requests.post(url, data=payload, timeout=5)
+        if not response.json().get('ok'):
+            print(f"Telegram edit error: {response.json()}")
+    except Exception as e:
+        print(f"Telegram edit error: {e}")
+
+def answer_callback_query(callback_query_id: str, text: str = None) -> None:
+    """Отвечает на callback query"""
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery"
+        payload = {
+            'callback_query_id': callback_query_id
+        }
+        
+        if text:
+            payload['text'] = text
+        
+        response = requests.post(url, data=payload, timeout=5)
+        if not response.json().get('ok'):
+            print(f"Telegram callback answer error: {response.json()}")
+    except Exception as e:
+        print(f"Telegram callback answer error: {e}")
 
 def send_order_notification(items_details, total_amount: float, buyer_name: str) -> None:
     lines = [f"🛒 Новая заявка из корзины", f"Покупатель: <b>{buyer_name}</b>"]
@@ -706,7 +750,33 @@ def telegram_webhook():
         data = request.get_json()
         print(f"🔍 Webhook received: {data}")  # Отладочная информация
         
-        if not data or 'message' not in data:
+        if not data:
+            print("❌ No data in webhook")
+            return jsonify({'ok': True})
+        
+        # Обрабатываем callback_query (нажатия на кнопки)
+        if 'callback_query' in data:
+            from telegram_bot import handle_callback_query, answer_callback_query
+            callback_query = data['callback_query']
+            chat_id = str(callback_query['message']['chat']['id'])
+            message_id = callback_query['message']['message_id']
+            
+            print(f"🔘 Callback: {callback_query['data']} from {chat_id}")
+            
+            # Обрабатываем только админские callback
+            if chat_id == '1172834372':
+                response, keyboard = handle_callback_query(callback_query, chat_id)
+                
+                # Отвечаем на callback query
+                answer_callback_query(callback_query['id'])
+                
+                # Редактируем сообщение
+                edit_telegram_message(response, chat_id, message_id, keyboard)
+            
+            return jsonify({'ok': True})
+        
+        # Обрабатываем обычные сообщения
+        if 'message' not in data:
             print("❌ No message in webhook data")
             return jsonify({'ok': True})
         
@@ -720,8 +790,8 @@ def telegram_webhook():
         # Обрабатываем админ команды
         if chat_id == '1172834372':
             from telegram_bot import handle_admin_command
-            response = handle_admin_command(text, chat_id)
-            send_telegram_message(response, chat_id)
+            response, keyboard = handle_admin_command(text, chat_id)
+            send_telegram_message(response, chat_id, keyboard)
             return jsonify({'ok': True})
         
         # Обрабатываем команды пользователей
@@ -914,6 +984,93 @@ def test_telegram():
         return jsonify({'success': True, 'message': 'Тестовое сообщение отправлено'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Ошибка отправки: {str(e)}'})
+
+@app.route('/admin/database')
+@login_required
+def view_database():
+    """Просмотр базы данных пользователей (только для админа)"""
+    if not current_user.is_admin:
+        return "Доступ запрещен", 403
+    
+    try:
+        # Получаем всех пользователей
+        users = User.query.all()
+        
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>База данных пользователей</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: #fff; }
+                table { border-collapse: collapse; width: 100%; background: #2a2a2a; }
+                th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+                th { background: #333; }
+                .status { padding: 4px 8px; border-radius: 4px; }
+                .configured { background: #4CAF50; color: white; }
+                .pending { background: #FF9800; color: white; }
+                .admin { background: #2196F3; color: white; }
+                .banned { background: #f44336; color: white; }
+            </style>
+        </head>
+        <body>
+            <h1>🗄️ База данных пользователей</h1>
+            <p>Всего пользователей: <strong>{}</strong></p>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Balance</th>
+                    <th>Telegram</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+        """.format(len(users))
+        
+        for user in users:
+            # Определяем статус
+            status_class = ""
+            status_text = "User"
+            
+            if user.is_admin:
+                status_class = "admin"
+                status_text = "Admin"
+            elif user.is_banned:
+                status_class = "banned"
+                status_text = "Banned"
+            
+            # Статус Telegram
+            telegram_status = ""
+            if user.telegram_chat_id:
+                telegram_status = f'<span class="status configured">Настроен</span><br><small>ID: {user.telegram_chat_id}</small>'
+            else:
+                telegram_status = '<span class="status pending">Не настроен</span>'
+            
+            html += f"""
+                <tr>
+                    <td>{user.id}</td>
+                    <td>{user.username}</td>
+                    <td>{user.email}</td>
+                    <td>{user.balance:.2f}₽</td>
+                    <td>{telegram_status}</td>
+                    <td><span class="status {status_class}">{status_text}</span></td>
+                    <td>{user.created_at.strftime('%d.%m.%Y %H:%M') if user.created_at else 'N/A'}</td>
+                </tr>
+            """
+        
+        html += """
+            </table>
+            <br>
+            <a href="/admin" style="color: #4CAF50;">← Назад к админ панели</a>
+        </body>
+        </html>
+        """
+        
+        return html
+        
+    except Exception as e:
+        return f"Ошибка: {str(e)}", 500
 
 @app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
 @login_required

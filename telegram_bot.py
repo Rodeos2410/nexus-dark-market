@@ -1,11 +1,12 @@
 import requests
 import json
+import os
 from app import app, db, User, Product, CartItem
 from datetime import datetime
 
 # Конфигурация бота
-TELEGRAM_BOT_TOKEN = '8458514538:AAFIAT7BrKelIHie9-JscBnOlAFd_V2qyMY'
-ADMIN_CHAT_ID = '1172834372'
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8458514538:AAFIAT7BrKelIHie9-JscBnOlAFd_V2qyMY')
+ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID', '1172834372')
 BASE_URL = 'https://api.telegram.org/bot'
 
 def create_inline_keyboard(buttons):
