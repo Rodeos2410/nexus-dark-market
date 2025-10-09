@@ -55,3 +55,4 @@ except Exception as e:
     print(f"❌ Ошибка при проверке базы данных: {e}")
 
 
+
