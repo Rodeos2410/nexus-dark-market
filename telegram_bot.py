@@ -21,12 +21,14 @@ def set_user_state(chat_id, state):
     """Устанавливает состояние пользователя"""
     user_states[str(chat_id)] = state
     print(f"🔍 Установлено состояние {state} для chat_id: {chat_id}")
+    print(f"🔍 Все состояния: {user_states}")
 
 def clear_user_state(chat_id):
     """Очищает состояние пользователя"""
     if str(chat_id) in user_states:
         del user_states[str(chat_id)]
         print(f"🔍 Очищено состояние для chat_id: {chat_id}")
+        print(f"🔍 Оставшиеся состояния: {user_states}")
 
 def create_inline_keyboard(buttons):
     """Создает inline клавиатуру с кнопками"""
@@ -938,6 +940,7 @@ def process_telegram_update(update):
         send_telegram_message(response_text, chat_id, keyboard)
     else:
         # Если это не команда и нет активного состояния, показываем главное меню
+        print(f"🔍 Нет активного состояния, показываем главное меню")
         send_telegram_message("🔧 <b>Админ панель</b>\n\nВыберите действие:", chat_id, get_main_menu())
 
 if __name__ == "__main__":
