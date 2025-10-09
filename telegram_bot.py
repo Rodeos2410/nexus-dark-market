@@ -275,6 +275,45 @@ def delete_user_admin(user_id):
             return f"✅ Пользователь {username} удален (товаров: {len(products)})"
         return "❌ Пользователь не найден"
 
+def change_admin_username(new_username):
+    """Изменяет логин админа"""
+    with app.app_context():
+        # Находим админа (предполагаем, что это пользователь с ID 1 или первый админ)
+        admin = User.query.filter_by(is_admin=True).first()
+        if admin:
+            old_username = admin.username
+            admin.username = new_username
+            db.session.commit()
+            return f"✅ Логин админа изменен с '{old_username}' на '{new_username}'"
+        return "❌ Админ не найден"
+
+def change_admin_password(new_password):
+    """Изменяет пароль админа"""
+    with app.app_context():
+        from werkzeug.security import generate_password_hash
+        
+        # Находим админа
+        admin = User.query.filter_by(is_admin=True).first()
+        if admin:
+            admin.password_hash = generate_password_hash(new_password)
+            db.session.commit()
+            return f"✅ Пароль админа изменен"
+        return "❌ Админ не найден"
+
+def get_admin_info():
+    """Получает информацию об админе"""
+    with app.app_context():
+        admin = User.query.filter_by(is_admin=True).first()
+        if admin:
+            return {
+                'username': admin.username,
+                'email': admin.email,
+                'created_at': admin.created_at.strftime('%d.%m.%Y %H:%M'),
+                'telegram_chat_id': admin.telegram_chat_id,
+                'is_banned': admin.is_banned
+            }
+        return None
+
 def get_main_menu():
     """Возвращает главное меню с кнопками"""
     buttons = [
@@ -285,6 +324,9 @@ def get_main_menu():
         [
             {'text': '🔧 Управление', 'callback_data': 'management'},
             {'text': '📱 Telegram', 'callback_data': 'telegram'}
+        ],
+        [
+            {'text': '⚙️ Настройки админа', 'callback_data': 'admin_settings'}
         ],
         [
             {'text': '❓ Помощь', 'callback_data': 'help'}
@@ -341,6 +383,22 @@ def get_telegram_menu():
     buttons = [
         [
             {'text': '📱 Настроить Telegram', 'callback_data': 'setup_telegram'}
+        ],
+        [
+            {'text': '🔙 Назад', 'callback_data': 'main_menu'}
+        ]
+    ]
+    return create_inline_keyboard(buttons)
+
+def get_admin_settings_menu():
+    """Возвращает меню настроек админа"""
+    buttons = [
+        [
+            {'text': '👤 Изменить логин', 'callback_data': 'change_admin_username'},
+            {'text': '🔒 Изменить пароль', 'callback_data': 'change_admin_password'}
+        ],
+        [
+            {'text': 'ℹ️ Информация об админе', 'callback_data': 'admin_info'}
         ],
         [
             {'text': '🔙 Назад', 'callback_data': 'main_menu'}
@@ -578,6 +636,31 @@ def handle_callback_query(callback_query, chat_id):
     elif callback_data == 'telegram':
         return "📱 <b>Настройки Telegram</b>\n\nВыберите действие:", get_telegram_menu()
     
+    elif callback_data == 'admin_settings':
+        return "⚙️ <b>Настройки админа</b>\n\nВыберите действие:", get_admin_settings_menu()
+    
+    elif callback_data == 'change_admin_username':
+        return "👤 <b>Изменение логина админа</b>\n\nВведите новый логин в формате:\n\n<code>change_username новый_логин</code>\n\nНапример: <code>change_username newadmin</code>", get_admin_settings_menu()
+    
+    elif callback_data == 'change_admin_password':
+        return "🔒 <b>Изменение пароля админа</b>\n\nВведите новый пароль в формате:\n\n<code>change_password новый_пароль</code>\n\nНапример: <code>change_password newpassword123</code>", get_admin_settings_menu()
+    
+    elif callback_data == 'admin_info':
+        admin_info = get_admin_info()
+        if admin_info:
+            text = f"""ℹ️ <b>Информация об админе</b>
+
+<b>Логин:</b> {admin_info['username']}
+<b>Email:</b> {admin_info['email']}
+<b>Telegram Chat ID:</b> {admin_info['telegram_chat_id'] or 'Не настроен'}
+<b>Статус:</b> {'🚫 Заблокирован' if admin_info['is_banned'] else '✅ Активен'}
+<b>Создан:</b> {admin_info['created_at']}
+
+<b>💡 Скопируйте логин:</b> <code>{admin_info['username']}</code>"""
+            return text, get_admin_settings_menu()
+        else:
+            return "❌ Информация об админе не найдена", get_admin_settings_menu()
+    
     elif callback_data == 'help':
         text = """🔧 <b>Админ панель</b>
 
@@ -597,8 +680,23 @@ def handle_callback_query(callback_query, chat_id):
 📱 <b>Telegram:</b>
 Настройка Telegram для пользователей
 
+⚙️ <b>Настройки админа:</b>
+• Изменение логина админа
+• Изменение пароля админа
+• Информация об админе
+
 ❓ <b>Помощь:</b>
-Показать эту справку"""
+Показать эту справку
+
+<b>📝 Команды:</b>
+• <code>find username</code> - найти пользователя
+• <code>ban username</code> - заблокировать
+• <code>unban username</code> - разблокировать
+• <code>admin username</code> - сделать админом
+• <code>remove_admin username</code> - убрать админа
+• <code>delete username</code> - удалить
+• <code>change_username новый_логин</code> - изменить логин админа
+• <code>change_password новый_пароль</code> - изменить пароль админа"""
         return text, get_main_menu()
     
     else:
@@ -702,6 +800,12 @@ def process_telegram_update(update):
 <b>💡 Скопируйте имя:</b> <code>{user.username}</code>"""
                     else:
                         response_text = f"❌ Пользователь '{username}' не найден"
+                elif action == 'change_username':
+                    new_username = username
+                    response_text = change_admin_username(new_username)
+                elif action == 'change_password':
+                    new_password = username
+                    response_text = change_admin_password(new_password)
                 else:
                     response_text = "❌ Неизвестная команда"
             
