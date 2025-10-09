@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import time
 from app import app, db, User, Product, CartItem
 from datetime import datetime
 
@@ -641,10 +642,16 @@ def handle_callback_query(callback_query, chat_id):
         return "⚙️ <b>Настройки админа</b>\n\nВыберите действие:", get_admin_settings_menu()
     
     elif callback_data == 'change_admin_username':
-        return "👤 <b>Изменение логина админа</b>\n\nВведите новый логин в формате:\n\n<code>change_username новый_логин</code>\n\nНапример: <code>change_username newadmin</code>", get_admin_settings_menu()
+        new_username = "admin" + str(int(time.time()))[-4:]  # Генерируем уникальный логин
+        result = change_admin_username(new_username)
+        text = f"{result}\n\n<b>💡 Новый логин:</b> <code>{new_username}</code>\n\n<b>⚠️ Сохраните логин!</b>"
+        return text, get_admin_settings_menu()
     
     elif callback_data == 'change_admin_password':
-        return "🔒 <b>Изменение пароля админа</b>\n\nВведите новый пароль в формате:\n\n<code>change_password новый_пароль</code>\n\nНапример: <code>change_password newpassword123</code>", get_admin_settings_menu()
+        new_password = "pass" + str(int(time.time()))[-6:]  # Генерируем уникальный пароль
+        result = change_admin_password(new_password)
+        text = f"{result}\n\n<b>💡 Новый пароль:</b> <code>{new_password}</code>\n\n<b>⚠️ Сохраните пароль!</b>"
+        return text, get_admin_settings_menu()
     
     elif callback_data == 'admin_info':
         admin_info = get_admin_info()
@@ -682,18 +689,15 @@ def handle_callback_query(callback_query, chat_id):
 Настройка Telegram для пользователей
 
 ⚙️ <b>Настройки админа:</b>
-• Изменение логина админа
-• Изменение пароля админа
+• Изменение логина админа (автоматическая генерация)
+• Изменение пароля админа (автоматическая генерация)
 • Информация об админе
 
 ❓ <b>Помощь:</b>
 Показать эту справку
 
-<b>📝 Команды для изменения:</b>
-• <code>change_username новый_логин</code> - изменить логин
-• <code>change_password новый_пароль</code> - изменить пароль
-
-<b>💡 Все остальные действия через кнопки!</b>"""
+<b>💡 Все действия выполняются через кнопки!</b>
+Никаких команд вводить не нужно."""
         return text, get_main_menu()
     
     else:
@@ -797,12 +801,6 @@ def process_telegram_update(update):
 <b>💡 Скопируйте имя:</b> <code>{user.username}</code>"""
                     else:
                         response_text = f"❌ Пользователь '{username}' не найден"
-                elif action == 'change_username':
-                    new_username = username
-                    response_text = change_admin_username(new_username)
-                elif action == 'change_password':
-                    new_password = username
-                    response_text = change_admin_password(new_password)
                 else:
                     response_text = "❌ Неизвестная команда"
             
