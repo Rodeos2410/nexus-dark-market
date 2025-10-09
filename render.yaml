@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: nexus-dark-market
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python render_app.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8458514538:AAFIAT7BrKelIHie9-JscBnOlAFd_V2qyMY
+      - key: ADMIN_CHAT_ID
+        value: 1172834372

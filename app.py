@@ -131,35 +131,45 @@ def send_seller_notification(product_name: str, quantity: int, price: float, buy
 
 
 def ensure_schema():
-    # Простая миграция для SQLite: добавить колонки, если их нет
+    # Создаем все таблицы и добавляем колонки, если их нет
     with app.app_context():
         try:
+            # Сначала создаем все таблицы
+            print("🔄 Creating database tables...")
+            db.create_all()
+            
             conn = db.engine.connect()
             
             # Проверяем таблицу product
-            res = conn.execute(text("PRAGMA table_info(product)"))
-            cols = [row[1] for row in res]
-            if 'stock' not in cols:
-                print("🔄 Adding stock column to product table")
-                conn.execute(text("ALTER TABLE product ADD COLUMN stock INTEGER DEFAULT 0"))
+            try:
+                res = conn.execute(text("PRAGMA table_info(product)"))
+                cols = [row[1] for row in res]
+                if 'stock' not in cols:
+                    print("🔄 Adding stock column to product table")
+                    conn.execute(text("ALTER TABLE product ADD COLUMN stock INTEGER DEFAULT 0"))
+            except Exception as e:
+                print(f"⚠️ Product table check failed: {e}")
             
             # Проверяем таблицу user
-            res = conn.execute(text("PRAGMA table_info(user)"))
-            cols = [row[1] for row in res]
-            print(f"📋 Current user table columns: {cols}")
-            
-            if 'telegram_username' not in cols:
-                print("🔄 Adding telegram_username column to user table")
-                conn.execute(text("ALTER TABLE user ADD COLUMN telegram_username VARCHAR(100)"))
-            if 'telegram_chat_id' not in cols:
-                print("🔄 Adding telegram_chat_id column to user table")
-                conn.execute(text("ALTER TABLE user ADD COLUMN telegram_chat_id VARCHAR(50)"))
-            if 'is_banned' not in cols:
-                print("🔄 Adding is_banned column to user table")
-                conn.execute(text("ALTER TABLE user ADD COLUMN is_banned BOOLEAN DEFAULT 0"))
-            if 'is_admin' not in cols:
-                print("🔄 Adding is_admin column to user table")
-                conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+            try:
+                res = conn.execute(text("PRAGMA table_info(user)"))
+                cols = [row[1] for row in res]
+                print(f"📋 Current user table columns: {cols}")
+                
+                if 'telegram_username' not in cols:
+                    print("🔄 Adding telegram_username column to user table")
+                    conn.execute(text("ALTER TABLE user ADD COLUMN telegram_username VARCHAR(100)"))
+                if 'telegram_chat_id' not in cols:
+                    print("🔄 Adding telegram_chat_id column to user table")
+                    conn.execute(text("ALTER TABLE user ADD COLUMN telegram_chat_id VARCHAR(50)"))
+                if 'is_banned' not in cols:
+                    print("🔄 Adding is_banned column to user table")
+                    conn.execute(text("ALTER TABLE user ADD COLUMN is_banned BOOLEAN DEFAULT 0"))
+                if 'is_admin' not in cols:
+                    print("🔄 Adding is_admin column to user table")
+                    conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+            except Exception as e:
+                print(f"⚠️ User table check failed: {e}")
             
             conn.commit()
             conn.close()
