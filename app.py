@@ -253,15 +253,15 @@ def ensure_schema():
                     if 'is_banned' not in cols:
                         print("🔄 Adding is_banned column to user table")
                         conn.execute(text("ALTER TABLE user ADD COLUMN is_banned BOOLEAN DEFAULT 0"))
-                            if 'is_admin' not in cols:
-                                print("🔄 Adding is_admin column to user table")
-                                conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
-                            if 'auth_code' not in cols:
-                                print("🔄 Adding auth_code column to user table")
-                                conn.execute(text("ALTER TABLE user ADD COLUMN auth_code VARCHAR(6)"))
-                            if 'auth_code_expires' not in cols:
-                                print("🔄 Adding auth_code_expires column to user table")
-                                conn.execute(text("ALTER TABLE user ADD COLUMN auth_code_expires DATETIME"))
+                    if 'is_admin' not in cols:
+                        print("🔄 Adding is_admin column to user table")
+                        conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+                    if 'auth_code' not in cols:
+                        print("🔄 Adding auth_code column to user table")
+                        conn.execute(text("ALTER TABLE user ADD COLUMN auth_code VARCHAR(6)"))
+                    if 'auth_code_expires' not in cols:
+                        print("🔄 Adding auth_code_expires column to user table")
+                        conn.execute(text("ALTER TABLE user ADD COLUMN auth_code_expires DATETIME"))
                 except Exception as e:
                     print(f"⚠️ User table check failed: {e}")
             
