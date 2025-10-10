@@ -1154,7 +1154,9 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         ensure_schema()
-        if User.query.count() == 0:
+        # Проверяем, есть ли уже админ
+        admin_exists = User.query.filter_by(is_admin=True).first()
+        if not admin_exists:
             admin = User(
                 username='Rodeos',
                 email='rodeos@nexus.dark',
@@ -1167,6 +1169,8 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print('Создан администратор: Rodeos/Rodeos24102007')
+        else:
+            print(f'Администратор уже существует: {admin_exists.username}')
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
