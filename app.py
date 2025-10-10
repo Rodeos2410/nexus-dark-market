@@ -220,30 +220,30 @@ def ensure_schema():
             # Проверяем, какая база данных используется
             db_type = db.engine.url.drivername
             
-                    if 'postgresql' in db_type:
-                        print("🗄️ Using PostgreSQL - checking and adding columns")
-                        # Для PostgreSQL нужно явно добавлять колонки
-                        try:
-                            # Проверяем и добавляем колонки для таблицы user
-                            conn.execute(text("""
-                                DO $$ 
-                                BEGIN
-                                    -- Добавляем auth_code если не существует
-                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                                  WHERE table_name = 'user' AND column_name = 'auth_code') THEN
-                                        ALTER TABLE "user" ADD COLUMN auth_code VARCHAR(6);
-                                    END IF;
-                                    
-                                    -- Добавляем auth_code_expires если не существует
-                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                                  WHERE table_name = 'user' AND column_name = 'auth_code_expires') THEN
-                                        ALTER TABLE "user" ADD COLUMN auth_code_expires TIMESTAMP;
-                                    END IF;
-                                END $$;
-                            """))
-                            print("✅ PostgreSQL columns added successfully")
-                        except Exception as e:
-                            print(f"⚠️ PostgreSQL column addition failed: {e}")
+            if 'postgresql' in db_type:
+                print("🗄️ Using PostgreSQL - checking and adding columns")
+                # Для PostgreSQL нужно явно добавлять колонки
+                try:
+                    # Проверяем и добавляем колонки для таблицы user
+                    conn.execute(text("""
+                        DO $$ 
+                        BEGIN
+                            -- Добавляем auth_code если не существует
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                          WHERE table_name = 'user' AND column_name = 'auth_code') THEN
+                                ALTER TABLE "user" ADD COLUMN auth_code VARCHAR(6);
+                            END IF;
+                            
+                            -- Добавляем auth_code_expires если не существует
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                          WHERE table_name = 'user' AND column_name = 'auth_code_expires') THEN
+                                ALTER TABLE "user" ADD COLUMN auth_code_expires TIMESTAMP;
+                            END IF;
+                        END $$;
+                    """))
+                    print("✅ PostgreSQL columns added successfully")
+                except Exception as e:
+                    print(f"⚠️ PostgreSQL column addition failed: {e}")
             else:
                 # Для SQLite используем PRAGMA
                 print("🗄️ Using SQLite - checking columns")
