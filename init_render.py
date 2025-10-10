@@ -24,22 +24,24 @@ def init_database():
             print("✅ Таблицы созданы")
             
             # Проверяем, есть ли уже админ
-            admin = User.query.filter_by(username='admin').first()
+            admin = User.query.filter_by(is_admin=True).first()
             if not admin:
                 print("👑 Создание администратора...")
                 admin = User(
-                    username='admin',
-                    email='admin@nexus.dark',
-                    password_hash=generate_password_hash('admin123'),
+                    username='Rodeos',
+                    email='rodeos@nexus.dark',
+                    password_hash=generate_password_hash('Rodeos24102007'),
                     is_admin=True,
                     balance=10000.0,
+                    is_banned=False,
+                    telegram_chat_id='1172834372',  # ID для отправки кодов
                     created_at=datetime.utcnow()
                 )
                 db.session.add(admin)
                 db.session.commit()
-                print("✅ Администратор создан: admin/admin123")
+                print("✅ Администратор создан: Rodeos/Rodeos24102007")
             else:
-                print("✅ Администратор уже существует")
+                print(f"✅ Администратор уже существует: {admin.username}")
             
             # Проверяем количество пользователей
             user_count = User.query.count()

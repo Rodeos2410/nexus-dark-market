@@ -373,22 +373,29 @@ def login():
                 if user.is_banned:
                     flash('Ваш аккаунт заблокирован. Обратитесь к администратору.')
                 else:
-                    # Генерируем код и отправляем в Telegram
-                    auth_code = generate_auth_code()
-                    user.auth_code = auth_code
-                    user.auth_code_expires = datetime.utcnow() + timedelta(minutes=5)
-                    db.session.commit()
-                    
-                    # Отправляем код в Telegram
-                    if send_auth_code_to_telegram(user, auth_code):
-                        flash('Код аутентификации отправлен в Telegram. Введите его ниже.')
-                        return render_template('login.html', show_code_input=True, username=username)
-                    else:
-                        flash('Ошибка отправки кода в Telegram. Проверьте настройки уведомлений.')
-                        # Очищаем код при ошибке отправки
-                        user.auth_code = None
-                        user.auth_code_expires = None
+                    # Проверяем, является ли пользователь админом
+                    if user.is_admin:
+                        # Для админов используем 2FA
+                        auth_code = generate_auth_code()
+                        user.auth_code = auth_code
+                        user.auth_code_expires = datetime.utcnow() + timedelta(minutes=5)
                         db.session.commit()
+                        
+                        # Отправляем код в Telegram
+                        if send_auth_code_to_telegram(user, auth_code):
+                            flash('Код аутентификации отправлен в Telegram. Введите его ниже.')
+                            return render_template('login.html', show_code_input=True, username=username)
+                        else:
+                            flash('Ошибка отправки кода в Telegram. Проверьте настройки уведомлений.')
+                            # Очищаем код при ошибке отправки
+                            user.auth_code = None
+                            user.auth_code_expires = None
+                            db.session.commit()
+                    else:
+                        # Для обычных пользователей - обычный вход
+                        login_user(user)
+                        next_page = request.args.get('next')
+                        return redirect(next_page) if next_page else redirect(url_for('market'))
             else:
                 flash('Неверное имя пользователя или пароль')
     
