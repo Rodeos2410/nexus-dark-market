@@ -575,7 +575,10 @@ def users():
 @login_required
 def chat_with_seller(product_id):
     """Чат с продавцом товара"""
+    print(f"💬 Открываем чат для товара {product_id}, пользователь {current_user.id}")
+    
     product = Product.query.get_or_404(product_id)
+    print(f"📦 Товар найден: {product.name}, продавец: {product.seller.username} (ID: {product.seller_id})")
     
     # Получаем сообщения между текущим пользователем и продавцом
     messages = Message.query.filter(
@@ -583,11 +586,18 @@ def chat_with_seller(product_id):
         ((Message.sender_id == product.seller_id) & (Message.receiver_id == current_user.id))
     ).filter(Message.product_id == product_id).order_by(Message.created_at.asc()).all()
     
+    print(f"📝 Найдено сообщений: {len(messages)}")
+    
     # Отмечаем сообщения как прочитанные
+    read_count = 0
     for message in messages:
         if message.receiver_id == current_user.id and not message.is_read:
             message.is_read = True
-    db.session.commit()
+            read_count += 1
+    
+    if read_count > 0:
+        db.session.commit()
+        print(f"✅ Отмечено как прочитанных: {read_count}")
     
     return render_template('chat.html', product=product, messages=messages)
 
@@ -595,30 +605,42 @@ def chat_with_seller(product_id):
 @login_required
 def send_message():
     """Отправка сообщения"""
-    data = request.get_json()
-    receiver_id = data.get('receiver_id')
-    product_id = data.get('product_id')
-    content = data.get('content', '').strip()
-    
-    if not receiver_id or not content:
-        return jsonify({'success': False, 'message': 'Неверные данные'})
-    
-    # Проверяем, что получатель существует
-    receiver = User.query.get(receiver_id)
-    if not receiver:
-        return jsonify({'success': False, 'message': 'Получатель не найден'})
-    
-    # Создаем сообщение
-    message = Message(
-        sender_id=current_user.id,
-        receiver_id=receiver_id,
-        product_id=product_id,
-        content=content
-    )
-    
     try:
+        data = request.get_json()
+        print(f"📨 Получены данные сообщения: {data}")
+        
+        receiver_id = data.get('receiver_id')
+        product_id = data.get('product_id')
+        content = data.get('content', '').strip()
+        
+        print(f"📊 Данные: receiver_id={receiver_id}, product_id={product_id}, content='{content}'")
+        
+        if not receiver_id or not content:
+            print("❌ Неверные данные: отсутствует receiver_id или content")
+            return jsonify({'success': False, 'message': 'Неверные данные'})
+        
+        # Проверяем, что получатель существует
+        receiver = User.query.get(receiver_id)
+        if not receiver:
+            print(f"❌ Получатель не найден: receiver_id={receiver_id}")
+            return jsonify({'success': False, 'message': 'Получатель не найден'})
+        
+        print(f"✅ Получатель найден: {receiver.username} (ID: {receiver.id})")
+    
+        # Создаем сообщение
+        message = Message(
+            sender_id=current_user.id,
+            receiver_id=receiver_id,
+            product_id=product_id,
+            content=content
+        )
+        
+        print(f"📝 Создаем сообщение: от {current_user.id} к {receiver_id}, товар {product_id}")
+        
         db.session.add(message)
         db.session.commit()
+        
+        print(f"✅ Сообщение сохранено с ID: {message.id}")
         
         # Отправляем уведомление в Telegram продавцу
         if receiver.telegram_chat_id:
@@ -631,15 +653,23 @@ def send_message():
             telegram_message += f"💬 Сообщение: {content}\n\n"
             telegram_message += f"🔗 <a href='https://nexus-dark-market.onrender.com/chat/{product_id}'>Ответить</a>"
             
+            print(f"📱 Отправляем уведомление в Telegram: {receiver.telegram_chat_id}")
             send_telegram_message(telegram_message, receiver.telegram_chat_id)
+        else:
+            print(f"⚠️ У получателя не настроен Telegram: {receiver.username}")
         
-        return jsonify({
+        response_data = {
             'success': True, 
             'message': 'Сообщение отправлено',
             'message_id': message.id,
             'created_at': message.created_at.strftime('%H:%M')
-        })
+        }
+        
+        print(f"📤 Отправляем ответ: {response_data}")
+        return jsonify(response_data)
+        
     except Exception as e:
+        print(f"❌ Ошибка при отправке сообщения: {e}")
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Ошибка отправки: {str(e)}'})
 

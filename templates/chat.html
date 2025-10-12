@@ -110,7 +110,18 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if (!data.success) {
+            if (data.success) {
+                showNotification('Сообщение отправлено', 'success');
+                // Обновляем время отправки
+                const messages = chatContainer.querySelectorAll('.message-sent');
+                if (messages.length > 0) {
+                    const lastMessage = messages[messages.length - 1];
+                    const timeElement = lastMessage.querySelector('span');
+                    if (timeElement) {
+                        timeElement.textContent = data.created_at;
+                    }
+                }
+            } else {
                 showNotification('Ошибка: ' + data.message, 'error');
                 // Удаляем сообщение при ошибке
                 const messages = chatContainer.querySelectorAll('.message-sent');
