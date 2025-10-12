@@ -10,6 +10,12 @@ body {
     box-sizing: border-box;
 }
 
+@media (max-width: 480px) {
+    body {
+        padding: 0 5px;
+    }
+}
+
 .rainbow-text {
     font-size: 4em;
     font-weight: bold;
@@ -42,8 +48,9 @@ body {
 
 @media (max-width: 480px) {
     .rainbow-text {
-        font-size: 2em;
-        padding: 5px;
+        font-size: 1.5em;
+        padding: 3px;
+        margin: 5px 0;
     }
 }
 
@@ -202,11 +209,12 @@ button:hover, .button:hover {
 
 @media (max-width: 480px) {
     button, .button {
-        min-height: 48px;
-        padding: 14px 18px;
-        font-size: 15px;
-        width: 100%;
-        white-space: normal;
+        min-height: 36px;
+        padding: 8px 12px;
+        font-size: 13px;
+        width: auto;
+        white-space: nowrap;
+        flex: 1;
     }
 }
 
@@ -257,32 +265,72 @@ button:hover, .button:hover {
 
 @media (max-width: 480px) {
     .header-bar {
-        gap: 6px;
-        padding: 6px 0;
+        gap: 4px;
+        padding: 4px 0;
         margin: 0 -5px;
-        justify-content: center;
+        justify-content: flex-end;
+        overflow-x: auto;
     }
     
     .main-nav {
-        gap: 6px;
-        flex-wrap: wrap;
-        justify-content: center;
+        gap: 4px;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        min-width: max-content;
     }
     
     .main-nav .button {
-        padding: 6px 10px;
-        font-size: 12px;
-        min-height: 32px;
+        padding: 6px 8px;
+        font-size: 11px;
+        min-height: 28px;
         flex: 0 0 auto;
+        white-space: nowrap;
     }
     
-    /* Скрываем длинные тексты на очень маленьких экранах */
-    .main-nav .button:not(#cart-button) {
-        display: none;
+    /* Сокращаем текст кнопок на мобильных */
+    .main-nav .button[href*="market"]::after {
+        content: "🏪";
+    }
+    .main-nav .button[href*="market"] {
+        font-size: 0;
+        padding: 6px 8px;
+        min-width: 28px;
     }
     
-    .main-nav .button#cart-button {
-        display: block;
+    .main-nav .button[href*="add_product"]::after {
+        content: "➕";
+    }
+    .main-nav .button[href*="add_product"] {
+        font-size: 0;
+        padding: 6px 8px;
+        min-width: 28px;
+    }
+    
+    .main-nav .button[href*="messages"]::after {
+        content: "💬";
+    }
+    .main-nav .button[href*="messages"] {
+        font-size: 0;
+        padding: 6px 8px;
+        min-width: 28px;
+    }
+    
+    .main-nav .button[href*="profile"]::after {
+        content: "👤";
+    }
+    .main-nav .button[href*="profile"] {
+        font-size: 0;
+        padding: 6px 8px;
+        min-width: 28px;
+    }
+    
+    .main-nav .button[href*="admin"]::after {
+        content: "⚙️";
+    }
+    .main-nav .button[href*="admin"] {
+        font-size: 0;
+        padding: 6px 8px;
+        min-width: 28px;
     }
 }
 
@@ -319,13 +367,13 @@ button:hover, .button:hover {
 
 @media (max-width: 480px) {
     .container {
-        padding: 10px 5px;
-        gap: 10px;
+        padding: 5px 2px;
+        gap: 8px;
     }
     
     .products-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 10px;
     }
 }
 
@@ -398,16 +446,22 @@ button:hover, .button:hover {
 
 @media (max-width: 480px) {
     .product-card {
-        padding: 8px;
-        gap: 5px;
+        padding: 6px;
+        gap: 4px;
     }
     
     .product-card h3 {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        line-height: 1.2;
     }
     
     .product-card p {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+        line-height: 1.3;
+    }
+    
+    .product-card .price {
+        font-size: 1rem;
     }
 }
 
@@ -427,13 +481,25 @@ button:hover, .button:hover {
 
 @media (max-width: 480px) {
     .product-buttons {
-        flex-direction: column;
-        gap: 8px;
+        flex-direction: row;
+        gap: 6px;
+        flex-wrap: wrap;
     }
     
     .cart-button, .chat-button {
-        width: 100%;
-        min-width: auto;
+        flex: 1;
+        min-width: 0;
+        font-size: 12px;
+        padding: 8px 6px;
+        min-height: 32px;
+    }
+    
+    .cart-button {
+        flex: 1.2;
+    }
+    
+    .chat-button {
+        flex: 1;
     }
 }
 
@@ -499,30 +565,33 @@ button:hover, .button:hover {
 
 @media (max-width: 480px) {
     .chat-container {
-        height: 300px;
-        padding: 10px;
+        height: 250px;
+        padding: 8px;
     }
     
     .message-form {
-        flex-direction: column;
-        gap: 8px;
+        flex-direction: row;
+        gap: 6px;
     }
     
     .message-form input {
-        padding: 12px;
-        font-size: 16px; /* Увеличиваем для мобильных */
+        padding: 8px;
+        font-size: 14px;
+        flex: 1;
     }
     
     .message-form button {
-        padding: 12px;
-        font-size: 16px;
-        width: 100%;
+        padding: 8px 12px;
+        font-size: 12px;
+        width: auto;
+        flex: 0 0 auto;
     }
     
     /* Адаптируем сообщения для мобильных */
     .message div div {
-        max-width: 85% !important;
-        font-size: 14px;
+        max-width: 80% !important;
+        font-size: 13px;
+        padding: 8px 12px;
     }
 }
 
