@@ -8,56 +8,56 @@
         <div class="product-card">
             <h2>🗄️ База данных пользователей</h2>
             
-            <div style="background: #1a1a1f; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="margin: 0; font-size: 18px;">
+            <div class="database-stats">
+                <p>
                     <strong>Всего пользователей:</strong> 
-                    <span style="color: #4CAF50; font-size: 24px;">{{ users|length }}</span>
+                    <span>{{ users|length }}</span>
                 </p>
             </div>
             
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; background: #1a1a1f; border-radius: 8px; overflow: hidden;">
+            <div class="database-table-container">
+                <table class="database-table">
                     <thead>
-                        <tr style="background: #0b0b0d;">
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">ID</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Username</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Email</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Balance</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Telegram</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Status</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Created</th>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Balance</th>
+                            <th>Telegram</th>
+                            <th>Status</th>
+                            <th>Created</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
-                        <tr style="border-bottom: 1px solid #333;">
-                            <td style="padding: 12px;">{{ user.id }}</td>
-                            <td style="padding: 12px;">
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>
                                 <div style="font-weight: bold;">{{ user.username }}</div>
                                 {% if user.telegram_username %}
                                     <div style="font-size: 12px; color: #666;">@{{ user.telegram_username }}</div>
                                 {% endif %}
                             </td>
-                            <td style="padding: 12px;">{{ user.email }}</td>
-                            <td style="padding: 12px;">{{ "%.2f"|format(user.balance) }}₽</td>
-                            <td style="padding: 12px;">
+                            <td>{{ user.email }}</td>
+                            <td>{{ "%.2f"|format(user.balance) }}₽</td>
+                            <td>
                                 {% if user.telegram_chat_id %}
-                                    <span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Настроен</span>
+                                    <span class="status-badge status-active">Настроен</span>
                                     <br><small style="color: #666;">ID: {{ user.telegram_chat_id }}</small>
                                 {% else %}
-                                    <span style="background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Не настроен</span>
+                                    <span class="status-badge" style="background: #FF9800;">Не настроен</span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 12px;">
+                            <td>
                                 {% if user.is_admin %}
-                                    <span style="background: #2196F3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Admin</span>
+                                    <span class="status-badge" style="background: #2196F3;">Admin</span>
                                 {% elif user.is_banned %}
-                                    <span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Banned</span>
+                                    <span class="status-badge status-banned">Banned</span>
                                 {% else %}
-                                    <span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">User</span>
+                                    <span class="status-badge status-active">User</span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 12px;">
+                            <td>
                                 {% if user.created_at %}
                                     {{ user.created_at.strftime('%d.%m.%Y %H:%M') }}
                                 {% else %}
@@ -71,7 +71,7 @@
             </div>
             
             <div style="text-align: center; margin-top: 20px;">
-                <a href="/admin" style="display: inline-block; background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                <a href="/admin" class="database-back-button">
                     ← Назад к админ панели
                 </a>
             </div>

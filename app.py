@@ -231,6 +231,30 @@ def ensure_schema():
             print("🔄 Creating database tables...")
             db.create_all()
             
+            # Проверяем, что таблица message создана
+            try:
+                message_count = Message.query.count()
+                print(f"✅ Таблица Message создана, сообщений: {message_count}")
+            except Exception as e:
+                print(f"⚠️ Проблема с таблицей Message: {e}")
+                # Пытаемся создать таблицу вручную
+                try:
+                    db.session.execute(text("""
+                        CREATE TABLE IF NOT EXISTS message (
+                            id SERIAL PRIMARY KEY,
+                            sender_id INTEGER NOT NULL,
+                            receiver_id INTEGER NOT NULL,
+                            product_id INTEGER,
+                            content TEXT NOT NULL,
+                            is_read BOOLEAN DEFAULT FALSE,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """))
+                    db.session.commit()
+                    print("✅ Таблица Message создана вручную")
+                except Exception as e2:
+                    print(f"❌ Не удалось создать таблицу Message: {e2}")
+            
             # Для PostgreSQL используем другой подход
             conn = db.engine.connect()
             
@@ -259,6 +283,31 @@ def ensure_schema():
                         END $$;
                     """))
                     print("✅ PostgreSQL columns added successfully")
+                    
+                    # Проверяем таблицу message для PostgreSQL
+                    try:
+                        conn.execute(text("""
+                            DO $$ 
+                            BEGIN
+                                -- Создаем таблицу message если не существует
+                                IF NOT EXISTS (SELECT 1 FROM information_schema.tables 
+                                              WHERE table_name = 'message') THEN
+                                    CREATE TABLE message (
+                                        id SERIAL PRIMARY KEY,
+                                        sender_id INTEGER NOT NULL,
+                                        receiver_id INTEGER NOT NULL,
+                                        product_id INTEGER,
+                                        content TEXT NOT NULL,
+                                        is_read BOOLEAN DEFAULT FALSE,
+                                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                    );
+                                END IF;
+                            END $$;
+                        """))
+                        print("✅ Message table checked/created for PostgreSQL")
+                    except Exception as e:
+                        print(f"⚠️ Message table check failed for PostgreSQL: {e}")
+                        
                 except Exception as e:
                     print(f"⚠️ PostgreSQL column addition failed: {e}")
             else:
@@ -301,6 +350,30 @@ def ensure_schema():
                         conn.execute(text("ALTER TABLE user ADD COLUMN auth_code_expires DATETIME"))
                 except Exception as e:
                     print(f"⚠️ User table check failed: {e}")
+            
+            # Проверяем таблицу message
+            try:
+                res = conn.execute(text("PRAGMA table_info(message)"))
+                cols = [row[1] for row in res]
+                print(f"✅ Message table exists with columns: {cols}")
+            except Exception as e:
+                print(f"⚠️ Message table check failed: {e}")
+                # Создаем таблицу message для SQLite
+                try:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS message (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            sender_id INTEGER NOT NULL,
+                            receiver_id INTEGER NOT NULL,
+                            product_id INTEGER,
+                            content TEXT NOT NULL,
+                            is_read BOOLEAN DEFAULT FALSE,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """))
+                    print("✅ Message table created for SQLite")
+                except Exception as e2:
+                    print(f"❌ Failed to create Message table: {e2}")
             
             conn.commit()
             conn.close()

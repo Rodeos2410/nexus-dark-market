@@ -31,12 +31,12 @@
                 {% endif %}
             {% endwith %}
             
-            <form method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
+            <form method="POST" enctype="multipart/form-data" class="add-product-form" style="margin-bottom:20px;">
                 <label for="name">Название:</label>
                 <input type="text" id="name" name="name" required maxlength="200">
                 
                 <label for="description">Описание:</label>
-                <textarea id="description" name="description" rows="3" style="width: 90%; margin: 6px auto 0 auto; display: block; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: #0b0b0d; color: #fff; box-sizing: border-box; font-family: Arial, sans-serif; resize: vertical;"></textarea>
+                <textarea id="description" name="description" rows="3"></textarea>
                 
                 <label for="price">Цена (₽):</label>
                 <input type="number" id="price" name="price" step="0.01" min="0.01" required>
@@ -45,7 +45,7 @@
                 <input type="number" id="stock" name="stock" min="0" step="1" value="0" required>
 
                 <label for="image">Изображение:</label>
-                <input type="file" id="image" name="image" accept="image/*" style="color: #fff; background: #0b0b0d;">
+                <input type="file" id="image" name="image" accept="image/*">
                 
                 <button type="submit" class="button">Добавить</button>
             </form>
@@ -64,13 +64,13 @@
                     <p>{{ product.description }}</p>
                     <div class="price">{{ '%.2f'|format(product.price) }}₽ · Остаток: {{ product.stock }}</div>
                     <div class="product-actions">
-                        <form onsubmit="return updateProduct(event, {{ product.id }})" style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                        <form onsubmit="return updateProduct(event, {{ product.id }})" class="product-edit-form">
                             <input type="text" name="name" placeholder="Название" value="{{ product.name }}">
                             <input type="number" step="0.01" min="0.01" name="price" placeholder="Цена" value="{{ '%.2f'|format(product.price) }}">
                             <input type="number" step="1" min="0" name="stock" placeholder="Остаток" value="{{ product.stock }}">
                             <textarea name="description" rows="2" placeholder="Описание">{{ product.description }}</textarea>
                             <input type="file" name="image" accept="image/*">
-                            <div style="display:flex; gap:8px;">
+                            <div class="product-edit-buttons">
                                 <button class="button" type="submit">Сохранить</button>
                                 <button class="button" style="background:#d32f2f;" type="button" onclick="deleteProduct({{ product.id }})">Удалить</button>
                             </div>

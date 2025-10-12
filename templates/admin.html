@@ -18,61 +18,61 @@
             
             <div style="background: #1a1a1f; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h3>📊 Статистика</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
-                    <div style="background: #0b0b0d; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: bold; color: #4CAF50;">{{ users|length }}</div>
-                        <div style="color: #666;">Всего пользователей</div>
+                <div class="admin-stats">
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-value" style="color: #4CAF50;">{{ users|length }}</div>
+                        <div class="admin-stat-label">Всего пользователей</div>
                     </div>
-                    <div style="background: #0b0b0d; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: bold; color: #2196F3;">{{ users|selectattr('is_admin')|list|length }}</div>
-                        <div style="color: #666;">Администраторов</div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-value" style="color: #2196F3;">{{ users|selectattr('is_admin')|list|length }}</div>
+                        <div class="admin-stat-label">Администраторов</div>
                     </div>
-                    <div style="background: #0b0b0d; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: bold; color: #f44336;">{{ users|selectattr('is_banned')|list|length }}</div>
-                        <div style="color: #666;">Заблокированных</div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-value" style="color: #f44336;">{{ users|selectattr('is_banned')|list|length }}</div>
+                        <div class="admin-stat-label">Заблокированных</div>
                     </div>
-                    <div style="background: #0b0b0d; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: bold; color: #FF9800;">{{ users|rejectattr('is_banned')|list|length }}</div>
-                        <div style="color: #666;">Активных</div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-value" style="color: #FF9800;">{{ users|rejectattr('is_banned')|list|length }}</div>
+                        <div class="admin-stat-label">Активных</div>
                     </div>
                 </div>
                 
                 <!-- Кнопка просмотра БД -->
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="/admin/database" style="display: inline-block; background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    <a href="/admin/database" class="button" style="background: #4CAF50;">
                         🗄️ Просмотр базы данных
                     </a>
                 </div>
             </div>
             
             <h3>👥 Управление пользователями</h3>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; background: #1a1a1f; border-radius: 8px; overflow: hidden;">
+            <div class="admin-table-container">
+                <table class="admin-table">
                     <thead>
-                        <tr style="background: #0b0b0d;">
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">ID</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Пользователь</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Email</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Баланс</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Telegram</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Статус</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Регистрация</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #333;">Действия</th>
+                        <tr>
+                            <th>ID</th>
+                            <th>Пользователь</th>
+                            <th>Email</th>
+                            <th>Баланс</th>
+                            <th>Telegram</th>
+                            <th>Статус</th>
+                            <th>Регистрация</th>
+                            <th>Действия</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
-                        <tr style="border-bottom: 1px solid #333;">
-                            <td style="padding: 12px;">{{ user.id }}</td>
-                            <td style="padding: 12px;">
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>
                                 <div style="font-weight: bold;">{{ user.username }}</div>
                                 {% if user.telegram_username %}
                                     <div style="font-size: 12px; color: #666;">@{{ user.telegram_username }}</div>
                                 {% endif %}
                             </td>
-                            <td style="padding: 12px;">{{ user.email }}</td>
-                            <td style="padding: 12px;">{{ "%.2f"|format(user.balance) }}₽</td>
-                            <td style="padding: 12px;">
+                            <td>{{ user.email }}</td>
+                            <td>{{ "%.2f"|format(user.balance) }}₽</td>
+                            <td>
                                 {% if user.telegram_username %}
                                     <div style="font-size: 12px;">@{{ user.telegram_username }}</div>
                                     {% if user.telegram_chat_id %}
@@ -84,37 +84,37 @@
                                     <div style="font-size: 12px; color: #666;">Не указан</div>
                                 {% endif %}
                             </td>
-                            <td style="padding: 12px;">
+                            <td>
                                 {% if user.is_admin %}
-                                    <span style="background: #9C27B0; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Админ</span>
+                                    <span class="status-badge status-admin">Админ</span>
                                 {% endif %}
                                 {% if user.is_banned %}
-                                    <span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Заблокирован</span>
+                                    <span class="status-badge status-banned">Заблокирован</span>
                                 {% else %}
-                                    <span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Активен</span>
+                                    <span class="status-badge status-active">Активен</span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 12px;">{{ user.created_at.strftime('%d.%m.%Y') }}</td>
-                            <td style="padding: 12px;">
-                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
+                            <td>
+                                <div class="admin-actions">
                                     {% if user.id != current_user.id %}
                                         {% if user.is_banned %}
-                                            <button onclick="unbanUser({{ user.id }})" class="button" style="background: #4CAF50; font-size: 12px; padding: 4px 8px;">Разблокировать</button>
+                                            <button onclick="unbanUser({{ user.id }})" class="admin-action-button" style="background: #4CAF50;">Разблокировать</button>
                                         {% else %}
-                                            <button onclick="banUser({{ user.id }})" class="button" style="background: #f44336; font-size: 12px; padding: 4px 8px;">Заблокировать</button>
+                                            <button onclick="banUser({{ user.id }})" class="admin-action-button" style="background: #f44336;">Заблокировать</button>
                                         {% endif %}
                                         
                                         {% if not user.is_admin %}
-                                            <button onclick="makeAdmin({{ user.id }})" class="button" style="background: #9C27B0; font-size: 12px; padding: 4px 8px;">Сделать админом</button>
+                                            <button onclick="makeAdmin({{ user.id }})" class="admin-action-button" style="background: #9C27B0;">Сделать админом</button>
                                         {% else %}
-                                            <button onclick="removeAdmin({{ user.id }})" class="button" style="background: #FF9800; font-size: 12px; padding: 4px 8px;">Убрать админа</button>
+                                            <button onclick="removeAdmin({{ user.id }})" class="admin-action-button" style="background: #FF9800;">Убрать админа</button>
                                         {% endif %}
                                         
                                         {% if user.telegram_username and not user.telegram_chat_id and user.username != 'admin' %}
-                                            <button onclick="setupTelegram({{ user.id }})" class="button" style="background: #2196F3; font-size: 12px; padding: 4px 8px;">Настроить Telegram</button>
+                                            <button onclick="setupTelegram({{ user.id }})" class="admin-action-button" style="background: #2196F3;">Настроить Telegram</button>
                                         {% endif %}
                                         
-                                        <button onclick="deleteUser({{ user.id }})" class="button" style="background: #d32f2f; font-size: 12px; padding: 4px 8px;">Удалить</button>
+                                        <button onclick="deleteUser({{ user.id }})" class="admin-action-button" style="background: #d32f2f;">Удалить</button>
                                     {% else %}
                                         <span style="color: #666; font-size: 12px;">Вы</span>
                                     {% endif %}

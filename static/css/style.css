@@ -607,6 +607,1018 @@ button:hover, .button:hover {
     }
 }
 
+/* Стили для страниц аутентификации */
+.auth-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+}
+
+.auth-card .product-card {
+    padding: 20px;
+    text-align: center;
+}
+
+.auth-card h2 {
+    margin: 20px 0;
+    color: #fff;
+    font-size: 1.5em;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: #1a1a1f;
+    color: white;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.auth-card input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+.rainbow-text-small {
+    color: #4CAF50;
+    text-decoration: none;
+    font-size: 0.9em;
+    margin-top: 15px;
+    display: inline-block;
+}
+
+.rainbow-text-small:hover {
+    text-decoration: underline;
+}
+
+/* Адаптивные стили для страниц аутентификации */
+@media (max-width: 768px) {
+    .auth-center {
+        padding: 15px;
+        min-height: 70vh;
+    }
+    
+    .auth-card {
+        max-width: 100%;
+    }
+    
+    .auth-card .product-card {
+        padding: 15px;
+    }
+    
+    .auth-card h2 {
+        font-size: 1.3em;
+        margin: 15px 0;
+    }
+    
+    .auth-card input {
+        padding: 14px;
+        font-size: 16px; /* Предотвращает зум на iOS */
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-center {
+        padding: 10px;
+        min-height: 60vh;
+    }
+    
+    .auth-card .product-card {
+        padding: 12px;
+    }
+    
+    .auth-card h2 {
+        font-size: 1.2em;
+        margin: 12px 0;
+    }
+    
+    .auth-card input {
+        padding: 12px;
+        margin: 8px 0;
+        font-size: 16px;
+    }
+    
+    .rainbow-text-small {
+        font-size: 0.85em;
+        margin-top: 12px;
+    }
+}
+
+/* Стили для страницы профиля */
+.profile {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: #0f0f13;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.avatar {
+    width: 60px;
+    height: 60px;
+    background: #4CAF50;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.profile-meta h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.5em;
+}
+
+.muted {
+    color: #9aa0a6;
+    font-size: 0.9em;
+    margin: 2px 0;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.stat {
+    text-align: center;
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.stat-label {
+    color: #9aa0a6;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+.inline-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.inline-form input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: #1a1a1f;
+    color: white;
+    font-size: 14px;
+}
+
+.inline-form input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.hint {
+    font-size: 0.85em;
+    color: #9aa0a6;
+    margin-top: 8px;
+}
+
+.divider {
+    height: 1px;
+    background: #333;
+    margin: 15px 0;
+}
+
+.card.danger {
+    border-color: #d32f2f;
+}
+
+/* Адаптивные стили для профиля */
+@media (max-width: 768px) {
+    .profile {
+        padding: 15px;
+    }
+    
+    .profile-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .card {
+        padding: 15px;
+    }
+    
+    .profile-header {
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .profile-meta h2 {
+        font-size: 1.3em;
+    }
+    
+    .profile-stats {
+        gap: 15px;
+    }
+    
+    .stat-value {
+        font-size: 1.3em;
+    }
+    
+    .inline-form {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+    
+    .inline-form input {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile {
+        padding: 10px;
+    }
+    
+    .profile-grid {
+        gap: 12px;
+    }
+    
+    .card {
+        padding: 12px;
+    }
+    
+    .profile-header {
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .profile-meta h2 {
+        font-size: 1.2em;
+    }
+    
+    .muted {
+        font-size: 0.85em;
+    }
+    
+    .profile-stats {
+        gap: 12px;
+        margin-top: 12px;
+    }
+    
+    .stat-value {
+        font-size: 1.2em;
+    }
+    
+    .stat-label {
+        font-size: 0.8em;
+    }
+    
+    .inline-form input {
+        padding: 12px;
+        font-size: 16px; /* Предотвращает зум на iOS */
+    }
+    
+    .hint {
+        font-size: 0.8em;
+    }
+}
+
+/* Стили для страницы добавления товаров */
+.add-product-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.add-product-form label {
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.add-product-form input,
+.add-product-form textarea,
+.add-product-form select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: #1a1a1f;
+    color: white;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.add-product-form input:focus,
+.add-product-form textarea:focus,
+.add-product-form select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+.add-product-form textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: Arial, sans-serif;
+}
+
+.add-product-form input[type="file"] {
+    padding: 8px;
+    background: #0b0b0d;
+    border: 1px dashed #333;
+}
+
+.add-product-form input[type="file"]:hover {
+    border-color: #4CAF50;
+}
+
+/* Стили для редактирования товаров */
+.product-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.product-edit-form input,
+.product-edit-form textarea {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: #1a1a1f;
+    color: white;
+}
+
+.product-edit-form textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: Arial, sans-serif;
+}
+
+.product-edit-form input[type="file"] {
+    padding: 6px;
+    background: #0b0b0d;
+    border: 1px dashed #333;
+}
+
+.product-edit-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.product-edit-buttons .button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+/* Адаптивные стили для добавления товаров */
+@media (max-width: 768px) {
+    .add-product-form {
+        gap: 12px;
+    }
+    
+    .add-product-form input,
+    .add-product-form textarea,
+    .add-product-form select {
+        padding: 14px;
+        font-size: 16px; /* Предотвращает зум на iOS */
+    }
+    
+    .add-product-form textarea {
+        min-height: 100px;
+    }
+    
+    .product-edit-form {
+        gap: 6px;
+    }
+    
+    .product-edit-form input,
+    .product-edit-form textarea {
+        padding: 10px;
+        font-size: 16px; /* Предотвращает зум на iOS */
+    }
+    
+    .product-edit-form textarea {
+        min-height: 80px;
+    }
+    
+    .product-edit-buttons {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .product-edit-buttons .button {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .add-product-form {
+        gap: 10px;
+    }
+    
+    .add-product-form input,
+    .add-product-form textarea,
+    .add-product-form select {
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .add-product-form textarea {
+        min-height: 90px;
+    }
+    
+    .product-edit-form {
+        gap: 5px;
+    }
+    
+    .product-edit-form input,
+    .product-edit-form textarea {
+        padding: 8px;
+        font-size: 16px;
+    }
+    
+    .product-edit-form textarea {
+        min-height: 70px;
+    }
+    
+    .product-edit-buttons .button {
+        padding: 10px;
+        font-size: 13px;
+    }
+}
+
+/* Стили для админ панели */
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.admin-stat-card {
+    background: #0b0b0d;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.admin-stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.admin-stat-label {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.admin-table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1a1f;
+    border-radius: 8px;
+    overflow: hidden;
+    min-width: 800px;
+}
+
+.admin-table th {
+    background: #0b0b0d;
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+    color: #fff;
+    font-weight: bold;
+}
+
+.admin-table td {
+    padding: 12px;
+    border-bottom: 1px solid #333;
+    color: #fff;
+}
+
+.admin-table tr:hover {
+    background: #1f1f1f;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.admin-action-button {
+    font-size: 12px;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    font-weight: 500;
+}
+
+.admin-action-button:hover {
+    opacity: 0.8;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-admin {
+    background: #9C27B0;
+    color: white;
+}
+
+.status-banned {
+    background: #f44336;
+    color: white;
+}
+
+.status-active {
+    background: #4CAF50;
+    color: white;
+}
+
+/* Адаптивные стили для админ панели */
+@media (max-width: 768px) {
+    .admin-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .admin-stat-card {
+        padding: 12px;
+    }
+    
+    .admin-stat-value {
+        font-size: 20px;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .admin-actions {
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .admin-action-button {
+        font-size: 11px;
+        padding: 6px 8px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .admin-stat-card {
+        padding: 10px;
+    }
+    
+    .admin-stat-value {
+        font-size: 18px;
+    }
+    
+    .admin-stat-label {
+        font-size: 0.8em;
+    }
+    
+    .admin-table {
+        min-width: 600px;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 6px;
+        font-size: 12px;
+    }
+    
+    .admin-action-button {
+        font-size: 10px;
+        padding: 4px 6px;
+    }
+    
+    .status-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
+
+/* Стили для страницы сообщений */
+.dialogues-list {
+    margin-top: 20px;
+}
+
+.dialogue-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #1a1a1f;
+    border-radius: 8px;
+    text-decoration: none;
+    color: white;
+    transition: background 0.2s ease;
+}
+
+.dialogue-item:hover {
+    background: #1f1f1f;
+    text-decoration: none;
+    color: white;
+}
+
+.dialogue-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #2196F3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.dialogue-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.dialogue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.dialogue-username {
+    margin: 0;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.dialogue-time {
+    font-size: 0.8em;
+    color: #9aa0a6;
+    flex-shrink: 0;
+}
+
+.dialogue-message {
+    margin: 0;
+    font-size: 0.9em;
+    color: #ccc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dialogue-unread {
+    background: #f44336;
+    color: white;
+    border-radius: 50%;
+    padding: 5px 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* Адаптивные стили для сообщений */
+@media (max-width: 768px) {
+    .dialogue-item {
+        gap: 12px;
+        padding: 12px;
+    }
+    
+    .dialogue-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3em;
+    }
+    
+    .dialogue-username {
+        font-size: 1em;
+    }
+    
+    .dialogue-message {
+        font-size: 0.85em;
+    }
+}
+
+@media (max-width: 480px) {
+    .dialogue-item {
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .dialogue-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2em;
+    }
+    
+    .dialogue-username {
+        font-size: 0.95em;
+    }
+    
+    .dialogue-time {
+        font-size: 0.75em;
+    }
+    
+    .dialogue-message {
+        font-size: 0.8em;
+    }
+    
+    .dialogue-unread {
+        padding: 4px 8px;
+        font-size: 0.75em;
+    }
+}
+
+/* Дополнительные стили для страницы сообщений */
+.messages-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #333;
+}
+
+.messages-back-link {
+    color: #4CAF50;
+    text-decoration: none;
+    font-size: 1.2em;
+}
+
+.messages-back-link:hover {
+    text-decoration: underline;
+    color: #4CAF50;
+}
+
+.messages-title {
+    margin: 0;
+    color: #4CAF50;
+}
+
+.messages-empty {
+    text-align: center;
+    color: #666;
+    padding: 40px;
+}
+
+.messages-empty h3 {
+    margin: 0 0 10px 0;
+    color: #666;
+}
+
+.messages-empty p {
+    margin: 0 0 20px 0;
+}
+
+/* Адаптивные стили для заголовка сообщений */
+@media (max-width: 768px) {
+    .messages-header {
+        gap: 12px;
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+    }
+    
+    .messages-back-link {
+        font-size: 1.1em;
+    }
+    
+    .messages-title {
+        font-size: 1.3em;
+    }
+}
+
+@media (max-width: 480px) {
+    .messages-header {
+        gap: 10px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+    }
+    
+    .messages-back-link {
+        font-size: 1em;
+    }
+    
+    .messages-title {
+        font-size: 1.2em;
+    }
+    
+    .messages-empty {
+        padding: 30px 20px;
+    }
+    
+    .messages-empty h3 {
+        font-size: 1.2em;
+    }
+}
+
+/* Стили для страницы базы данных */
+.database-stats {
+    background: #1a1a1f;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.database-stats p {
+    margin: 0;
+    font-size: 18px;
+}
+
+.database-stats strong {
+    color: #fff;
+}
+
+.database-stats span {
+    color: #4CAF50;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.database-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.database-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1a1f;
+    border-radius: 8px;
+    overflow: hidden;
+    min-width: 800px;
+}
+
+.database-table th {
+    background: #0b0b0d;
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+    color: #fff;
+    font-weight: bold;
+}
+
+.database-table td {
+    padding: 12px;
+    border-bottom: 1px solid #333;
+    color: #fff;
+}
+
+.database-table tr:hover {
+    background: #1f1f1f;
+}
+
+.database-back-button {
+    display: inline-block;
+    background: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.database-back-button:hover {
+    background: #45a049;
+    text-decoration: none;
+    color: white;
+}
+
+/* Адаптивные стили для базы данных */
+@media (max-width: 768px) {
+    .database-stats {
+        padding: 12px;
+    }
+    
+    .database-stats p {
+        font-size: 16px;
+    }
+    
+    .database-stats span {
+        font-size: 20px;
+    }
+    
+    .database-table th,
+    .database-table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .database-back-button {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .database-stats {
+        padding: 10px;
+    }
+    
+    .database-stats p {
+        font-size: 14px;
+    }
+    
+    .database-stats span {
+        font-size: 18px;
+    }
+    
+    .database-table {
+        min-width: 600px;
+    }
+    
+    .database-table th,
+    .database-table td {
+        padding: 6px;
+        font-size: 12px;
+    }
+    
+    .database-back-button {
+        padding: 8px 16px;
+        font-size: 13px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
 .product-actions .button {
     padding: 6px 20px;
     height: auto;
