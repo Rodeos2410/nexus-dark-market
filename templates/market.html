@@ -25,13 +25,20 @@
             <div class="product-actions">
                 {% if current_user.is_authenticated %}
                     {% if product.seller_id != current_user.id %}
-                        <button onclick="addToCart({{ product.id }})" class="button" {% if product.stock is not none and product.stock <= 0 %}disabled style="opacity:.6; cursor:not-allowed;"{% endif %}>В корзину</button>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <button onclick="addToCart({{ product.id }})" class="button" {% if product.stock is not none and product.stock <= 0 %}disabled style="opacity:.6; cursor:not-allowed;"{% endif %}>🛒 В корзину</button>
+                            <a href="{{ url_for('chat_with_seller', product_id=product.id) }}" class="button" style="background: #2196F3; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                💬 Написать продавцу
+                            </a>
+                        </div>
                     {% else %}
                         <span class="button" style="background:#333; cursor:default;">Ваш товар</span>
                     {% endif %}
                 {% else %}
-                    <a class="button" href="{{ url_for('login') }}">Войти, чтобы купить</a>
-                    <a class="button" href="{{ url_for('register') }}">Регистрация</a>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <a class="button" href="{{ url_for('login') }}">Войти, чтобы купить</a>
+                        <a class="button" href="{{ url_for('register') }}">Регистрация</a>
+                    </div>
                 {% endif %}
                 <span>Продавец: {{ product.seller.username }}</span>
             </div>

@@ -61,6 +61,23 @@ class CartItem(db.Model):
     def __repr__(self):
         return f'<CartItem {self.product.name} x{self.quantity}>'
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=True)  # Связь с товаром
+    content = db.Column(db.Text, nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Связи
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+    product = db.relationship('Product', backref='messages')
+    
+    def __repr__(self):
+        return f'<Message from {self.sender.username} to {self.receiver.username}>'
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -479,6 +496,110 @@ def profile():
 def users():
     users_list = User.query.order_by(User.created_at.desc()).all()
     return render_template('users.html', users=users_list)
+
+# === Маршруты для чата ===
+@app.route('/chat/<int:product_id>')
+@login_required
+def chat_with_seller(product_id):
+    """Чат с продавцом товара"""
+    product = Product.query.get_or_404(product_id)
+    
+    # Получаем сообщения между текущим пользователем и продавцом
+    messages = Message.query.filter(
+        ((Message.sender_id == current_user.id) & (Message.receiver_id == product.seller_id)) |
+        ((Message.sender_id == product.seller_id) & (Message.receiver_id == current_user.id))
+    ).filter(Message.product_id == product_id).order_by(Message.created_at.asc()).all()
+    
+    # Отмечаем сообщения как прочитанные
+    for message in messages:
+        if message.receiver_id == current_user.id and not message.is_read:
+            message.is_read = True
+    db.session.commit()
+    
+    return render_template('chat.html', product=product, messages=messages)
+
+@app.route('/send_message', methods=['POST'])
+@login_required
+def send_message():
+    """Отправка сообщения"""
+    data = request.get_json()
+    receiver_id = data.get('receiver_id')
+    product_id = data.get('product_id')
+    content = data.get('content', '').strip()
+    
+    if not receiver_id or not content:
+        return jsonify({'success': False, 'message': 'Неверные данные'})
+    
+    # Проверяем, что получатель существует
+    receiver = User.query.get(receiver_id)
+    if not receiver:
+        return jsonify({'success': False, 'message': 'Получатель не найден'})
+    
+    # Создаем сообщение
+    message = Message(
+        sender_id=current_user.id,
+        receiver_id=receiver_id,
+        product_id=product_id,
+        content=content
+    )
+    
+    try:
+        db.session.add(message)
+        db.session.commit()
+        
+        # Отправляем уведомление в Telegram продавцу
+        if receiver.telegram_chat_id:
+            product = Product.query.get(product_id) if product_id else None
+            product_name = product.name if product else "товар"
+            
+            telegram_message = f"💬 <b>Новое сообщение</b>\n\n"
+            telegram_message += f"👤 От: <code>{current_user.username}</code>\n"
+            telegram_message += f"📦 Товар: <code>{product_name}</code>\n"
+            telegram_message += f"💬 Сообщение: {content}\n\n"
+            telegram_message += f"🔗 <a href='https://nexus-dark-market.onrender.com/chat/{product_id}'>Ответить</a>"
+            
+            send_telegram_message(telegram_message, receiver.telegram_chat_id)
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Сообщение отправлено',
+            'message_id': message.id,
+            'created_at': message.created_at.strftime('%H:%M')
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Ошибка отправки: {str(e)}'})
+
+@app.route('/messages')
+@login_required
+def my_messages():
+    """Список всех сообщений пользователя"""
+    # Получаем все диалоги пользователя
+    sent_messages = db.session.query(Message).filter(Message.sender_id == current_user.id).all()
+    received_messages = db.session.query(Message).filter(Message.receiver_id == current_user.id).all()
+    
+    # Собираем уникальные диалоги
+    dialogues = {}
+    
+    for message in sent_messages + received_messages:
+        other_user_id = message.receiver_id if message.sender_id == current_user.id else message.sender_id
+        other_user = User.query.get(other_user_id)
+        
+        if other_user_id not in dialogues:
+            dialogues[other_user_id] = {
+                'user': other_user,
+                'last_message': message,
+                'unread_count': 0
+            }
+        else:
+            if message.created_at > dialogues[other_user_id]['last_message'].created_at:
+                dialogues[other_user_id]['last_message'] = message
+        
+        # Считаем непрочитанные сообщения
+        if message.receiver_id == current_user.id and not message.is_read:
+            dialogues[other_user_id]['unread_count'] += 1
+    
+    return render_template('messages.html', dialogues=dialogues)
 
 @app.route('/admin')
 @login_required
