@@ -33,7 +33,7 @@
             </div>
             
             <!-- Чат -->
-            <div id="chat-container" style="height: 400px; overflow-y: auto; border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #0a0a0a;">
+            <div id="chat-container" class="chat-container" style="height: 400px; overflow-y: auto; border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #0a0a0a;">
                 {% for message in messages %}
                 <div class="message {% if message.sender_id == current_user.id %}message-sent{% else %}message-received{% endif %}" style="margin-bottom: 15px;">
                     <div style="display: flex; {% if message.sender_id == current_user.id %}justify-content: flex-end{% else %}justify-content: flex-start{% endif %};">
@@ -61,7 +61,7 @@
             </div>
             
             <!-- Форма отправки сообщения -->
-            <form id="message-form" style="display: flex; gap: 10px;">
+            <form id="message-form" class="message-form" style="display: flex; gap: 10px;">
                 <input type="text" id="message-input" placeholder="Напишите сообщение..." style="flex: 1; padding: 12px; border: 1px solid #333; border-radius: 8px; background: #1a1a1f; color: white; font-size: 14px;" required>
                 <button type="submit" style="padding: 12px 20px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
                     Отправить
