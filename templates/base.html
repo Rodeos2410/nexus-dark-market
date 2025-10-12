@@ -11,23 +11,37 @@
     <header class="site-header" style="align-self: stretch; width: 100%;">
         <div class="header-bar" style="display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:12px 0; margin:0 -20px;  width:100%;">
             <nav class="main-nav" style="display:flex; align-items:center; gap:12px; position: relative;">
-                <a class="button" href="{{ url_for('market') }}">Маркет</a>
+                <a class="button" href="{{ url_for('market') }}">
+                    <span class="nav-text">🏪 Маркет</span>
+                </a>
                 <!-- <a class="button" href="{{ url_for('users') }}">Пользователи</a> -->
                 {% if current_user.is_authenticated %}
-                    <a class="button" href="{{ url_for('add_product') }}">Добавить товар</a>
-                    <a class="button" href="{{ url_for('my_messages') }}" style="background:#2196F3;">💬 Сообщения</a>
-                    <a class="button" href="{{ url_for('profile') }}">Профиль</a>
+                    <a class="button" href="{{ url_for('add_product') }}">
+                        <span class="nav-text">➕ Добавить</span>
+                    </a>
+                    <a class="button" href="{{ url_for('my_messages') }}" style="background:#2196F3;">
+                        <span class="nav-text">💬 Сообщения</span>
+                    </a>
+                    <a class="button" href="{{ url_for('profile') }}">
+                        <span class="nav-text">👤 Профиль</span>
+                    </a>
                     {% if current_user.is_admin %}
-                        <a class="button" href="{{ url_for('admin_panel') }}" style="background:#9C27B0;">Админка</a>
+                        <a class="button" href="{{ url_for('admin_panel') }}" style="background:#9C27B0;">
+                            <span class="nav-text">⚙️ Админка</span>
+                        </a>
                     {% endif %}
                     <!-- <a class="button" style="background:#d32f2f;" href="{{ url_for('logout') }}">Выйти</a> -->
             {% else %}
-                    <a class="button" href="{{ url_for('login') }}">Вход</a>
-                    <a class="button" href="{{ url_for('register') }}">Регистрация</a>
+                    <a class="button" href="{{ url_for('login') }}">
+                        <span class="nav-text">🔑 Вход</span>
+                    </a>
+                    <a class="button" href="{{ url_for('register') }}">
+                        <span class="nav-text">📝 Регистрация</span>
+                    </a>
                 {% endif %}
                 <div id="cart-anchor" style="position: relative;">
                     <button id="cart-button" type="button" class="button" onclick="toggleCart()" aria-controls="cart-panel" aria-expanded="false">
-                        🛒 Корзина <span id="cart-count">{{ cart_count }}</span>
+                        <span class="nav-text">🛒 Корзина</span> <span id="cart-count">{{ cart_count }}</span>
                     </button>
                     <aside id="cart-panel" class="cart-panel cart-panel--hidden" aria-hidden="true" style="position: absolute; top: calc(100% + 8px); right: 0; z-index: 1100;">
                         <div class="cart-panel__header">

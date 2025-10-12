@@ -287,50 +287,62 @@ button:hover, .button:hover {
         white-space: nowrap;
     }
     
-    /* Сокращаем текст кнопок на мобильных */
-    .main-nav .button[href*="market"]::after {
-        content: "🏪";
-    }
-    .main-nav .button[href*="market"] {
-        font-size: 0;
+    /* Компактные кнопки с текстом и эмодзи */
+    .main-nav .button {
+        font-size: 10px;
         padding: 6px 8px;
-        min-width: 28px;
+        min-width: auto;
+        white-space: nowrap;
     }
     
-    .main-nav .button[href*="add_product"]::after {
-        content: "➕";
-    }
-    .main-nav .button[href*="add_product"] {
-        font-size: 0;
-        padding: 6px 8px;
-        min-width: 28px;
+    /* Адаптивный текст навигации */
+    .nav-text {
+        display: inline;
     }
     
-    .main-nav .button[href*="messages"]::after {
-        content: "💬";
-    }
-    .main-nav .button[href*="messages"] {
-        font-size: 0;
-        padding: 6px 8px;
-        min-width: 28px;
-    }
-    
-    .main-nav .button[href*="profile"]::after {
-        content: "👤";
-    }
-    .main-nav .button[href*="profile"] {
-        font-size: 0;
-        padding: 6px 8px;
-        min-width: 28px;
-    }
-    
-    .main-nav .button[href*="admin"]::after {
-        content: "⚙️";
-    }
-    .main-nav .button[href*="admin"] {
-        font-size: 0;
-        padding: 6px 8px;
-        min-width: 28px;
+    /* На очень маленьких экранах показываем только эмодзи */
+    @media (max-width: 360px) {
+        .nav-text {
+            font-size: 0;
+        }
+        
+        .nav-text::before {
+            content: attr(data-emoji);
+            font-size: 14px;
+        }
+        
+        .main-nav .button[href*="market"] .nav-text::before {
+            content: "🏪";
+        }
+        
+        .main-nav .button[href*="add_product"] .nav-text::before {
+            content: "➕";
+        }
+        
+        .main-nav .button[href*="messages"] .nav-text::before {
+            content: "💬";
+        }
+        
+        .main-nav .button[href*="profile"] .nav-text::before {
+            content: "👤";
+        }
+        
+        .main-nav .button[href*="admin"] .nav-text::before {
+            content: "⚙️";
+        }
+        
+        .main-nav .button[href*="login"] .nav-text::before {
+            content: "🔑";
+        }
+        
+        .main-nav .button[href*="register"] .nav-text::before {
+            content: "📝";
+        }
+        
+        /* Кнопка корзины на очень маленьких экранах */
+        #cart-button .nav-text::before {
+            content: "🛒";
+        }
     }
 }
 
