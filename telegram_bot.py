@@ -192,15 +192,6 @@ def ban_user(user_id):
             return f"✅ Пользователь {user.username} заблокирован"
         return "❌ Пользователь не найден"
 
-def ban_user_by_username(username):
-    """Блокирует пользователя по имени"""
-    with app.app_context():
-        user = get_user_by_username(username)
-        if user:
-            user.is_banned = True
-            db.session.commit()
-            return f"✅ Пользователь {user.username} заблокирован"
-        return f"❌ Пользователь '{username}' не найден"
 
 def unban_user(user_id):
     """Разблокирует пользователя"""
@@ -941,10 +932,13 @@ def process_telegram_update(update):
     if text.startswith('/') or text in ['start', 'menu', 'help']:
         response_text, keyboard = handle_admin_command(text, chat_id)
         send_telegram_message(response_text, chat_id, keyboard)
-    else:
-        # Если это не команда и нет активного состояния, показываем главное меню
-        print(f"🔍 Нет активного состояния, показываем главное меню")
+    elif chat_id == ADMIN_CHAT_ID:
+        # Если это админ и нет активного состояния, показываем главное меню
+        print(f"🔍 Админ без активного состояния, показываем главное меню")
         send_telegram_message("🔧 <b>Админ панель</b>\n\nВыберите действие:", chat_id, get_main_menu())
+    else:
+        # Для обычных пользователей
+        send_telegram_message("❌ Неизвестная команда. Используйте /start для главного меню", chat_id)
 
 if __name__ == "__main__":
     print("🤖 Telegram бот запущен!")
