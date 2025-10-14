@@ -56,6 +56,11 @@
                 <div style="text-align: center; color: #666; padding: 40px;">
                     <p>💬 Начните диалог с продавцом</p>
                     <p style="font-size: 0.9em;">Задайте вопросы о товаре или обсудите условия покупки</p>
+                    <p style="font-size: 0.8em; color: #888; margin-top: 10px;">
+                        Отладка: Сообщений в базе: {{ messages|length }}<br>
+                        Товар ID: {{ product.id }}, Продавец ID: {{ product.seller_id }}<br>
+                        Пользователь ID: {{ current_user.id }}
+                    </p>
                 </div>
                 {% endif %}
             </div>

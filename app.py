@@ -98,11 +98,15 @@ app = create_app()
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8458514538:AAFIAT7BrKelIHie9-JscBnOlAFd_V2qyMY')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1172834372')  # ID админа для уведомлений
 
-def send_telegram_message(text: str, chat_id: str = None, keyboard: dict = None) -> None:
+def send_telegram_message(text: str, chat_id: str = None, keyboard: dict = None) -> bool:
+    """Отправляет сообщение в Telegram с улучшенным логированием"""
     try:
+        target_chat_id = chat_id or TELEGRAM_CHAT_ID
+        print(f"📱 Отправляем Telegram сообщение в chat_id: {target_chat_id}")
+        
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
-            'chat_id': chat_id or TELEGRAM_CHAT_ID,
+            'chat_id': target_chat_id,
             'text': text,
             'parse_mode': 'HTML'
         }
@@ -111,14 +115,25 @@ def send_telegram_message(text: str, chat_id: str = None, keyboard: dict = None)
         if keyboard:
             payload['reply_markup'] = json.dumps(keyboard)
         
+        print(f"📤 Telegram запрос: {url}")
+        print(f"📋 Данные: {payload}")
+        
         # Не блокируем основной поток: таймаути короткие
-        response = requests.post(url, data=payload, timeout=5)
-        if not response.json().get('ok'):
-            print(f"Telegram error: {response.json()}")
+        response = requests.post(url, data=payload, timeout=10)
+        response_data = response.json()
+        
+        print(f"📥 Telegram ответ: {response_data}")
+        
+        if response_data.get('ok'):
+            print(f"✅ Telegram сообщение отправлено успешно")
+            return True
+        else:
+            print(f"❌ Telegram ошибка: {response_data}")
+            return False
+            
     except Exception as e:
-        # Игнорируем ошибки уведомлений, чтобы не ломать покупку
-        print(f"Telegram send error: {e}")
-        pass
+        print(f"❌ Telegram send error: {e}")
+        return False
 
 def edit_telegram_message(text: str, chat_id: str, message_id: int, keyboard: dict = None) -> None:
     """Редактирует сообщение в Telegram"""
@@ -654,7 +669,11 @@ def send_message():
             telegram_message += f"🔗 <a href='https://nexus-dark-market.onrender.com/chat/{product_id}'>Ответить</a>"
             
             print(f"📱 Отправляем уведомление в Telegram: {receiver.telegram_chat_id}")
-            send_telegram_message(telegram_message, receiver.telegram_chat_id)
+            telegram_sent = send_telegram_message(telegram_message, receiver.telegram_chat_id)
+            if telegram_sent:
+                print(f"✅ Telegram уведомление отправлено успешно")
+            else:
+                print(f"❌ Не удалось отправить Telegram уведомление")
         else:
             print(f"⚠️ У получателя не настроен Telegram: {receiver.username}")
         
