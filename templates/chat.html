@@ -85,6 +85,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Прокрутка вниз при загрузке
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
+    // Отладочная информация
+    console.log('💬 Чат загружен');
+    console.log('📦 Товар:', '{{ product.name }}');
+    console.log('👤 Продавец:', '{{ product.seller.username }}');
+    console.log('📝 Сообщений на странице:', {{ messages|length }});
+    
+    {% if messages %}
+    console.log('📋 Сообщения:');
+    {% for message in messages %}
+    console.log('   - От {{ message.sender.username }}: {{ message.content[:50] }}...');
+    {% endfor %}
+    {% else %}
+    console.log('📭 Сообщений нет');
+    {% endif %}
+    
     // Отправка сообщения
     messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -92,9 +107,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const content = messageInput.value.trim();
         if (!content) return;
         
-        // Показываем сообщение сразу
-        addMessageToChat(content, true);
+        // Очищаем поле ввода
         messageInput.value = '';
+        
+        // Показываем индикатор загрузки
+        showNotification('Отправляем сообщение...', 'info');
         
         // Отправляем на сервер
         fetch('/send_message', {
@@ -112,42 +129,32 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 showNotification('Сообщение отправлено', 'success');
-                // Обновляем время отправки
-                const messages = chatContainer.querySelectorAll('.message-sent');
-                if (messages.length > 0) {
-                    const lastMessage = messages[messages.length - 1];
-                    const timeElement = lastMessage.querySelector('span');
-                    if (timeElement) {
-                        timeElement.textContent = data.created_at;
-                    }
-                }
+                // Добавляем сообщение в чат после успешной отправки
+                addMessageToChat(content, true, data.created_at);
             } else {
                 showNotification('Ошибка: ' + data.message, 'error');
-                // Удаляем сообщение при ошибке
-                const messages = chatContainer.querySelectorAll('.message-sent');
-                if (messages.length > 0) {
-                    messages[messages.length - 1].remove();
-                }
+                // Возвращаем текст в поле ввода при ошибке
+                messageInput.value = content;
             }
         })
         .catch(error => {
             console.error('Ошибка:', error);
             showNotification('Не удалось отправить сообщение', 'error');
-            // Удаляем сообщение при ошибке
-            const messages = chatContainer.querySelectorAll('.message-sent');
-            if (messages.length > 0) {
-                messages[messages.length - 1].remove();
-            }
+            // Возвращаем текст в поле ввода при ошибке
+            messageInput.value = content;
         });
     });
     
-    function addMessageToChat(content, isSent) {
+    function addMessageToChat(content, isSent, timeString = null) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
         messageDiv.style.marginBottom = '15px';
         
-        const now = new Date();
-        const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        // Используем переданное время или текущее время
+        if (!timeString) {
+            const now = new Date();
+            timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        }
         
         messageDiv.innerHTML = `
             <div style="display: flex; ${isSent ? 'justify-content: flex-end' : 'justify-content: flex-start'};">

@@ -27,7 +27,7 @@
                     {% if product.seller_id != current_user.id %}
                         <div class="product-buttons" style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;">
                             <button onclick="addToCart({{ product.id }})" class="button cart-button" {% if product.stock is not none and product.stock <= 0 %}disabled style="opacity:.6; cursor:not-allowed;"{% endif %}>🛒 В корзину</button>
-                            <a href="{{ url_for('chat_with_seller', product_id=product.id) }}" class="button chat-button" style="background: #2196F3; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                            <a href="{{ url_for('chat_with_seller', product_id=product.id) }}" class="button chat-button" style="background: #2196F3; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
                                 💬 Написать продавцу
                             </a>
                         </div>

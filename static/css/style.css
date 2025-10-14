@@ -489,6 +489,10 @@ button:hover, .button:hover {
 .cart-button, .chat-button {
     flex: 1;
     min-width: 120px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 @media (max-width: 480px) {
@@ -504,6 +508,10 @@ button:hover, .button:hover {
         font-size: 12px;
         padding: 8px 6px;
         min-height: 32px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .cart-button {
