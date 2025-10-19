@@ -1,88 +1,60 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
-Автоматическое обновление репозитория с исправлениями системы прямого ввода
+Скрипт для автоматического обновления репозитория
 """
 
 import subprocess
 import sys
 import os
 
-def run_command(command):
-    """Выполняет команду и возвращает результат"""
+def run_command(command, description):
+    """Выполняет команду и выводит результат"""
+    print(f"\n🔄 {description}...")
     try:
         result = subprocess.run(command, shell=True, capture_output=True, text=True, encoding='utf-8')
-        return result.returncode == 0, result.stdout, result.stderr
+        if result.returncode == 0:
+            print(f"✅ {description} - успешно")
+            if result.stdout.strip():
+                print(f"📤 Вывод: {result.stdout.strip()}")
+        else:
+            print(f"❌ {description} - ошибка")
+            if result.stderr.strip():
+                print(f"📥 Ошибка: {result.stderr.strip()}")
+            return False
     except Exception as e:
-        return False, "", str(e)
-
-def update_repository():
-    """Обновляет репозиторий"""
-    print("🚀 Автоматическое обновление репозитория")
-    print("=" * 50)
-    
-    # Проверяем статус git
-    print("📋 Проверка статуса git...")
-    success, stdout, stderr = run_command("git status")
-    if not success:
-        print(f"❌ Ошибка git status: {stderr}")
+        print(f"❌ {description} - исключение: {e}")
         return False
-    
-    print("✅ Git статус проверен")
-    print(f"📄 Статус: {stdout[:200]}...")
-    
-    # Добавляем все файлы
-    print("\n📁 Добавление файлов...")
-    success, stdout, stderr = run_command("git add .")
-    if not success:
-        print(f"❌ Ошибка git add: {stderr}")
-        return False
-    
-    print("✅ Файлы добавлены")
-    
-    # Коммитим изменения
-    print("\n💾 Создание коммита...")
-    commit_message = "Fix direct input system - remove command processing causing 'Unknown command' error"
-    success, stdout, stderr = run_command(f'git commit -m "{commit_message}"')
-    if not success:
-        print(f"❌ Ошибка git commit: {stderr}")
-        return False
-    
-    print("✅ Коммит создан")
-    
-    # Отправляем в репозиторий
-    print("\n🌐 Отправка в репозиторий...")
-    success, stdout, stderr = run_command("git push origin main")
-    if not success:
-        print(f"❌ Ошибка git push: {stderr}")
-        return False
-    
-    print("✅ Изменения отправлены в репозиторий")
-    
     return True
 
 def main():
     """Основная функция"""
-    print("🎉 АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ РЕПОЗИТОРИЯ")
-    print("=" * 60)
+    print("🚀 Начинаем обновление репозитория...")
     
-    # Обновляем репозиторий
-    if update_repository():
-        print("\n🎉 РЕПОЗИТОРИЙ УСПЕШНО ОБНОВЛЕН!")
-        print("=" * 60)
-        
-        
-        print("\n🌐 Ссылки:")
-        print("   • Сайт: https://nexus-dark-market.onrender.com")
-        print("   • Бот: @NexusDarkBot")
-        print("   • Репозиторий: https://github.com/Rodeos2410/nexus-dark-market.git")
-        
-        print("\n🎯 Система прямого ввода теперь работает без ошибок!")
-        
-    else:
-        print("\n❌ ОШИБКА ПРИ ОБНОВЛЕНИИ РЕПОЗИТОРИЯ!")
-        print("Проверьте подключение к интернету и права доступа к репозиторию")
+    # Проверяем, что мы в git репозитории
+    if not os.path.exists('.git'):
+        print("❌ Это не git репозиторий!")
+        return False
+    
+    # Добавляем все файлы
+    if not run_command("git add .", "Добавление файлов"):
+        return False
+    
+    # Проверяем статус
+    if not run_command("git status", "Проверка статуса"):
+        return False
+    
+    # Коммитим изменения
+    commit_message = "Удалена функция удаления пользователей из админ панели бота"
+    if not run_command(f'git commit -m "{commit_message}"', "Создание коммита"):
+        return False
+    
+    # Отправляем в репозиторий
+    if not run_command("git push origin main", "Отправка в репозиторий"):
+        return False
+    
+    print("\n🎉 Репозиторий успешно обновлен!")
+    return True
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    sys.exit(0 if success else 1)

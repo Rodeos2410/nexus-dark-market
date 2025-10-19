@@ -263,29 +263,6 @@ def setup_telegram_chat(user_id, chat_id):
             return f"✅ Telegram настроен для пользователя {user.username}"
         return "❌ Пользователь не найден"
 
-def delete_user_admin(user_id):
-    """Удаляет пользователя"""
-    with app.app_context():
-        user = User.query.get(user_id)
-        if user:
-            username = user.username
-            
-            # Удаляем все товары пользователя
-            products = Product.query.filter_by(seller_id=user.id).all()
-            for product in products:
-                db.session.delete(product)
-            
-            # Удаляем все товары из корзины пользователя
-            cart_items = CartItem.query.filter_by(user_id=user.id).all()
-            for item in cart_items:
-                db.session.delete(item)
-            
-            # Удаляем пользователя
-            db.session.delete(user)
-            db.session.commit()
-            
-            return f"✅ Пользователь {username} удален (товаров: {len(products)})"
-        return "❌ Пользователь не найден"
 
 def change_admin_username(new_username):
     """Изменяет логин админа"""
@@ -356,16 +333,6 @@ def remove_admin_by_username(username):
         else:
             return f"❌ Пользователь '{username}' не найден"
 
-def delete_user_by_username(username):
-    """Удаляет пользователя по имени"""
-    with app.app_context():
-        user = User.query.filter_by(username=username).first()
-        if user:
-            db.session.delete(user)
-            db.session.commit()
-            return f"✅ Пользователь '{username}' удален"
-        else:
-            return f"❌ Пользователь '{username}' не найден"
 
 def find_user_by_username(username):
     """Находит пользователя по имени"""
@@ -447,9 +414,6 @@ def get_management_menu():
             {'text': '👤 Убрать админа', 'callback_data': 'remove_admin'}
         ],
         [
-            {'text': '🗑️ Удалить пользователя', 'callback_data': 'delete_user'}
-        ],
-        [
             {'text': '🔙 Назад', 'callback_data': 'main_menu'}
         ]
     ]
@@ -473,9 +437,6 @@ def get_user_actions_menu(user_id):
             [
                 {'text': '👑 Сделать админом', 'callback_data': f'make_admin_{user_id}'},
                 {'text': '👤 Убрать админа', 'callback_data': f'remove_admin_{user_id}'}
-            ],
-            [
-                {'text': '🗑️ Удалить', 'callback_data': f'delete_user_{user_id}'}
             ],
             [
                 {'text': '🔙 Назад к списку', 'callback_data': 'management'}
@@ -594,12 +555,6 @@ def handle_admin_command(message_text, chat_id):
         except ValueError:
             return "❌ Неверные параметры", get_main_menu()
 
-    elif command == '/delete' and len(parts) > 1:
-        try:
-            user_id = int(parts[1])
-            return delete_user_admin(user_id), get_main_menu()
-        except ValueError:
-            return "❌ Неверный ID пользователя", get_main_menu()
 
     elif command == '/help':
         text = """🔧 <b>Админ панель</b>
@@ -615,7 +570,6 @@ def handle_admin_command(message_text, chat_id):
 🔧 <b>Управление:</b>
 • Заблокировать/разблокировать пользователей
 • Назначить/убрать права админа
-• Удалить пользователей
 
 📱 <b>Telegram:</b>
 Настройка Telegram для пользователей
@@ -689,9 +643,6 @@ def handle_callback_query(callback_query, chat_id):
         user_states[str(chat_id)] = 'waiting_remove_admin_username'
         return "👤 <b>Убрать админа</b>\n\nВведите имя пользователя:", get_management_menu()
     
-    elif callback_data == 'delete_user':
-        user_states[str(chat_id)] = 'waiting_delete_username'
-        return "🗑️ <b>Удалить пользователя</b>\n\nВведите имя пользователя:", get_management_menu()
     
     elif callback_data == 'find_user':
         user_states[str(chat_id)] = 'waiting_find_username'
@@ -757,10 +708,6 @@ def handle_callback_query(callback_query, chat_id):
         result = remove_admin(user_id)
         return result, get_management_menu()
     
-    elif callback_data.startswith('delete_user_'):
-        user_id = int(callback_data.split('_')[2])
-        result = delete_user_admin(user_id)
-        return result, get_management_menu()
     
     elif callback_data == 'telegram':
         return "📱 <b>Настройки Telegram</b>\n\nВыберите действие:", get_telegram_menu()
@@ -914,12 +861,6 @@ def process_telegram_update(update):
             send_telegram_message(result, chat_id, get_main_menu())
             return
             
-        elif state == 'waiting_delete_username':
-            # Обрабатываем удаление пользователя
-            result = delete_user_by_username(text)
-            clear_user_state(chat_id)  # Удаляем состояние
-            send_telegram_message(result, chat_id, get_main_menu())
-            return
             
         elif state == 'waiting_find_username':
             # Обрабатываем поиск пользователя
