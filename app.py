@@ -95,7 +95,7 @@ def create_app(config_name='default'):
 app = create_app()
 
 # === Telegram уведомления ===
-TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8458514538:AAFIAT7BrKelIHie9-JscBnOlAFd_V2qyMY')
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8458514538:AAEQruDKFmiEwRlMS-MmtUJ6D6vF2VOQ9Sc')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1172834372')  # ID админа для уведомлений
 
 def send_telegram_message(text: str, chat_id: str = None, keyboard: dict = None) -> bool:
@@ -252,19 +252,33 @@ def ensure_schema():
                 print(f"✅ Таблица Message создана, сообщений: {message_count}")
             except Exception as e:
                 print(f"⚠️ Проблема с таблицей Message: {e}")
-                # Пытаемся создать таблицу вручную
+                # Пытаемся создать таблицу вручную (только для PostgreSQL)
                 try:
-                    db.session.execute(text("""
-                        CREATE TABLE IF NOT EXISTS message (
-                            id SERIAL PRIMARY KEY,
-                            sender_id INTEGER NOT NULL,
-                            receiver_id INTEGER NOT NULL,
-                            product_id INTEGER,
-                            content TEXT NOT NULL,
-                            is_read BOOLEAN DEFAULT FALSE,
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        )
-                    """))
+                    db_type = db.engine.url.drivername
+                    if 'postgresql' in db_type:
+                        db.session.execute(text("""
+                            CREATE TABLE IF NOT EXISTS message (
+                                id SERIAL PRIMARY KEY,
+                                sender_id INTEGER NOT NULL,
+                                receiver_id INTEGER NOT NULL,
+                                product_id INTEGER,
+                                content TEXT NOT NULL,
+                                is_read BOOLEAN DEFAULT FALSE,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )
+                        """))
+                    else:
+                        db.session.execute(text("""
+                            CREATE TABLE IF NOT EXISTS message (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                sender_id INTEGER NOT NULL,
+                                receiver_id INTEGER NOT NULL,
+                                product_id INTEGER,
+                                content TEXT NOT NULL,
+                                is_read BOOLEAN DEFAULT FALSE,
+                                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                            )
+                        """))
                     db.session.commit()
                     print("✅ Таблица Message создана вручную")
                 except Exception as e2:
@@ -366,29 +380,32 @@ def ensure_schema():
                 except Exception as e:
                     print(f"⚠️ User table check failed: {e}")
             
-            # Проверяем таблицу message
-            try:
-                res = conn.execute(text("PRAGMA table_info(message)"))
-                cols = [row[1] for row in res]
-                print(f"✅ Message table exists with columns: {cols}")
-            except Exception as e:
-                print(f"⚠️ Message table check failed: {e}")
-                # Создаем таблицу message для SQLite
+            # Проверяем таблицу message только для SQLite
+            if 'sqlite' in db_type:
                 try:
-                    conn.execute(text("""
-                        CREATE TABLE IF NOT EXISTS message (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            sender_id INTEGER NOT NULL,
-                            receiver_id INTEGER NOT NULL,
-                            product_id INTEGER,
-                            content TEXT NOT NULL,
-                            is_read BOOLEAN DEFAULT FALSE,
-                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                        )
-                    """))
-                    print("✅ Message table created for SQLite")
-                except Exception as e2:
-                    print(f"❌ Failed to create Message table: {e2}")
+                    res = conn.execute(text("PRAGMA table_info(message)"))
+                    cols = [row[1] for row in res]
+                    print(f"✅ Message table exists with columns: {cols}")
+                except Exception as e:
+                    print(f"⚠️ Message table check failed: {e}")
+                    # Создаем таблицу message для SQLite
+                    try:
+                        conn.execute(text("""
+                            CREATE TABLE IF NOT EXISTS message (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                sender_id INTEGER NOT NULL,
+                                receiver_id INTEGER NOT NULL,
+                                product_id INTEGER,
+                                content TEXT NOT NULL,
+                                is_read BOOLEAN DEFAULT FALSE,
+                                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                            )
+                        """))
+                        print("✅ Message table created for SQLite")
+                    except Exception as e2:
+                        print(f"❌ Failed to create Message table: {e2}")
+            else:
+                print("✅ Message table already handled for PostgreSQL")
             
             conn.commit()
             conn.close()
