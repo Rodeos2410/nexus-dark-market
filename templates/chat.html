@@ -131,6 +131,15 @@ class LiveChat {
         this.pollInterval = null;
         this.isUserAtBottom = true;
         
+        console.log('🚀 Конструктор LiveChat завершен');
+        console.log('📊 Параметры:', {
+            productId: this.productId,
+            sellerId: this.sellerId,
+            sellerName: this.sellerName,
+            currentUserId: this.currentUserId,
+            lastMessageId: this.lastMessageId
+        });
+        
         this.init();
     }
     
@@ -163,9 +172,15 @@ class LiveChat {
     
     getLastMessageId() {
         const messages = this.messagesContainer.querySelectorAll('.message[data-message-id]');
-        if (messages.length === 0) return 0;
+        console.log(`🔍 Найдено сообщений в DOM: ${messages.length}`);
+        if (messages.length === 0) {
+            console.log('📭 Сообщений в DOM нет, возвращаем 0');
+            return 0;
+        }
         const lastMessage = messages[messages.length - 1];
-        return parseInt(lastMessage.dataset.messageId) || 0;
+        const lastId = parseInt(lastMessage.dataset.messageId) || 0;
+        console.log(`📝 Последнее сообщение ID: ${lastId}`);
+        return lastId;
     }
     
     startPolling() {
@@ -179,15 +194,20 @@ class LiveChat {
     
     async checkForNewMessages() {
         try {
+            console.log(`🔍 Проверяем новые сообщения: товар ${this.productId}, последний ID ${this.lastMessageId}`);
             const response = await fetch(`/get_new_messages/${this.productId}?last_id=${this.lastMessageId}`);
             const data = await response.json();
             
+            console.log('📡 Ответ сервера:', data);
+            
             if (data.success && data.messages.length > 0) {
-                console.log(`📨 Получено ${data.messages.length} новых сообщений`);
+                console.log(`📨 Получено ${data.messages.length} новых сообщений:`, data.messages);
                 
                 // Добавляем новые сообщения
                 data.messages.forEach(message => {
-                    this.addMessageToChat(message, false);
+                    const isSent = message.sender_id === this.currentUserId;
+                    console.log(`💬 Добавляем сообщение: от ${message.sender_username}, отправлено: ${isSent}`, message);
+                    this.addMessageToChat(message, isSent);
                     this.lastMessageId = Math.max(this.lastMessageId, message.id);
                 });
                 
@@ -201,6 +221,10 @@ class LiveChat {
                 
                 // Показываем уведомление
                 this.showNotification('Новое сообщение', 'info');
+            } else if (data.success) {
+                console.log('📭 Новых сообщений нет');
+            } else {
+                console.log('❌ Ошибка от сервера:', data.message);
             }
         } catch (error) {
             console.error('❌ Ошибка при проверке новых сообщений:', error);
@@ -321,6 +345,8 @@ class LiveChat {
     }
     
     addMessageToChat(message, isSent) {
+        console.log(`🎨 Добавляем сообщение в чат:`, message, `отправлено: ${isSent}`);
+        
         // Убираем пустой чат если есть
         if (this.emptyChat) {
             this.emptyChat.remove();
@@ -343,7 +369,7 @@ class LiveChat {
             <div style="display: flex; ${isSent ? 'justify-content: flex-end' : 'justify-content: flex-start'};">
                 <div style="max-width: 70%; padding: 10px 15px; border-radius: 15px; word-wrap: break-word; ${isSent ? 'background: #4CAF50; color: white;' : 'background: #333; color: #fff;'}">
                     <div style="font-size: 0.9em; margin-bottom: 5px; opacity: 0.8;">
-                        ${isSent ? 'Вы' : this.sellerName}
+                        ${isSent ? 'Вы' : (message.sender_username || this.sellerName)}
                         <span style="margin-left: 10px; font-size: 0.8em;">${timeString}</span>
                         ${statusIcon ? `<span style="margin-left: 5px; font-size: 0.7em;">${statusIcon}</span>` : ''}
                     </div>
@@ -353,6 +379,7 @@ class LiveChat {
         `;
         
         this.messagesContainer.appendChild(messageDiv);
+        console.log(`✅ Сообщение добавлено в DOM:`, messageDiv);
         
         // Прокручиваем вниз если пользователь был внизу
         if (this.isUserAtBottom) {
