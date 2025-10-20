@@ -102,6 +102,7 @@ TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1172834372')  # ID адм
 if not TELEGRAM_BOT_TOKEN:
     print("⚠️ TELEGRAM_BOT_TOKEN не установлен в переменных окружения!")
     print("🔧 Установите переменную TELEGRAM_BOT_TOKEN в настройках Render")
+    print("📱 Telegram функции будут отключены")
     TELEGRAM_BOT_TOKEN = None
 else:
     print(f"✅ TELEGRAM_BOT_TOKEN установлен: {TELEGRAM_BOT_TOKEN[:10]}...")
@@ -276,10 +277,13 @@ def ensure_schema():
                 print(f"✅ Таблица Message создана, сообщений: {message_count}")
             except Exception as e:
                 print(f"⚠️ Проблема с таблицей Message: {e}")
-                # Пытаемся создать таблицу вручную
+                # Пытаемся создать таблицу вручную только для PostgreSQL
                 try:
                     db_type = db.engine.url.drivername
+                    print(f"🗄️ Database type: {db_type}")
+                    
                     if 'postgresql' in db_type:
+                        print("🗄️ Creating message table for PostgreSQL...")
                         db.session.execute(text("""
                             CREATE TABLE IF NOT EXISTS message (
                                 id SERIAL PRIMARY KEY,
@@ -291,20 +295,12 @@ def ensure_schema():
                                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             )
                         """))
+                        db.session.commit()
+                        print("✅ Таблица Message создана для PostgreSQL")
                     else:
-                        db.session.execute(text("""
-                            CREATE TABLE IF NOT EXISTS message (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                sender_id INTEGER NOT NULL,
-                                receiver_id INTEGER NOT NULL,
-                                product_id INTEGER,
-                                content TEXT NOT NULL,
-                                is_read BOOLEAN DEFAULT FALSE,
-                                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                            )
-                        """))
-                    db.session.commit()
-                    print("✅ Таблица Message создана вручную")
+                        print("🗄️ SQLite detected - using db.create_all()")
+                        # Для SQLite просто используем db.create_all()
+                        pass
                 except Exception as e2:
                     print(f"❌ Не удалось создать таблицу Message: {e2}")
             
