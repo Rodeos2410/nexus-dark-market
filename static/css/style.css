@@ -2123,3 +2123,253 @@ button:hover, .button:hover {
         display: none !important;
     }
 }
+
+/* ===== ЖИВОЙ ЧАТ - АНИМАЦИИ И СТИЛИ ===== */
+
+/* Анимация появления сообщений */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимация индикатора печати */
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4CAF50;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0s;
+}
+
+/* Спиннер загрузки */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #333;
+    border-top: 2px solid #4CAF50;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* Стили для сообщений */
+.message {
+    transition: all 0.3s ease;
+}
+
+.message:hover {
+    transform: translateX(2px);
+}
+
+.message-sent {
+    animation: slideInRight 0.3s ease-out;
+}
+
+.message-received {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Статусы сообщений */
+.message-status {
+    transition: all 0.3s ease;
+}
+
+.message-status:hover {
+    transform: scale(1.2);
+}
+
+/* Индикатор печати */
+.typing-indicator {
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* Контейнер чата */
+.chat-container {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #4CAF50 #333;
+}
+
+.chat-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: #333;
+    border-radius: 3px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: #4CAF50;
+    border-radius: 3px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+    background: #45a049;
+}
+
+/* Поле ввода сообщения */
+#message-input {
+    transition: all 0.3s ease;
+    border: 1px solid #333 !important;
+}
+
+#message-input:focus {
+    border-color: #4CAF50 !important;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
+    outline: none !important;
+}
+
+/* Кнопка отправки */
+#message-form button {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#message-form button:hover {
+    background: #45a049 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+#message-form button:active {
+    transform: translateY(0);
+}
+
+/* Индикатор загрузки */
+.loading-indicator {
+    animation: fadeIn 0.3s ease-in;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Уведомления */
+.notification {
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Адаптивность для чата */
+@media (max-width: 768px) {
+    .chat-container {
+        height: 300px !important;
+    }
+    
+    .message div {
+        max-width: 85% !important;
+    }
+    
+    .typing-dots span {
+        width: 4px;
+        height: 4px;
+    }
+    
+    .loading-spinner {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-container {
+        height: 250px !important;
+        padding: 10px !important;
+    }
+    
+    .message {
+        margin-bottom: 10px !important;
+    }
+    
+    .message div {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+    }
+    
+    #message-input {
+        font-size: 13px !important;
+        padding: 10px !important;
+    }
+    
+    #message-form button {
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+    }
+}

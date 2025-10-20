@@ -712,6 +712,120 @@ def my_messages():
     
     return render_template('messages.html', dialogues=dialogues)
 
+@app.route('/get_new_messages/<int:product_id>')
+@login_required
+def get_new_messages(product_id):
+    """Получение новых сообщений для живого чата"""
+    try:
+        last_id = request.args.get('last_id', 0, type=int)
+        print(f"📨 Запрос новых сообщений: товар {product_id}, последний ID {last_id}")
+        
+        # Получаем товар
+        product = Product.query.get_or_404(product_id)
+        
+        # Получаем новые сообщения
+        messages = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.receiver_id == product.seller_id)) |
+            ((Message.sender_id == product.seller_id) & (Message.receiver_id == current_user.id))
+        ).filter(
+            Message.product_id == product_id,
+            Message.id > last_id
+        ).order_by(Message.created_at.asc()).all()
+        
+        print(f"📝 Найдено новых сообщений: {len(messages)}")
+        
+        # Форматируем сообщения для JSON
+        messages_data = []
+        for message in messages:
+            messages_data.append({
+                'id': message.id,
+                'content': message.content,
+                'sender_id': message.sender_id,
+                'receiver_id': message.receiver_id,
+                'created_at': message.created_at.isoformat(),
+                'is_read': message.is_read,
+                'sender_username': message.sender.username
+            })
+        
+        return jsonify({
+            'success': True,
+            'messages': messages_data
+        })
+        
+    except Exception as e:
+        print(f"❌ Ошибка получения новых сообщений: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
+@app.route('/typing_signal', methods=['POST'])
+@login_required
+def typing_signal():
+    """Обработка сигнала печати"""
+    try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+        is_typing = data.get('is_typing', False)
+        
+        print(f"⌨️ Сигнал печати: товар {product_id}, печатает: {is_typing}")
+        
+        # Здесь можно добавить логику для уведомления других пользователей
+        # Например, через WebSocket или Server-Sent Events
+        
+        return jsonify({
+            'success': True,
+            'is_typing': is_typing
+        })
+        
+    except Exception as e:
+        print(f"❌ Ошибка обработки сигнала печати: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
+@app.route('/mark_messages_read', methods=['POST'])
+@login_required
+def mark_messages_read():
+    """Отметка сообщений как прочитанных"""
+    try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+        sender_id = data.get('sender_id')
+        
+        print(f"👁️ Отметка сообщений как прочитанных: товар {product_id}, отправитель {sender_id}")
+        
+        # Отмечаем сообщения как прочитанные
+        messages = Message.query.filter(
+            Message.sender_id == sender_id,
+            Message.receiver_id == current_user.id,
+            Message.product_id == product_id,
+            Message.is_read == False
+        ).all()
+        
+        read_count = 0
+        for message in messages:
+            message.is_read = True
+            read_count += 1
+        
+        if read_count > 0:
+            db.session.commit()
+            print(f"✅ Отмечено как прочитанных: {read_count} сообщений")
+        
+        return jsonify({
+            'success': True,
+            'read_count': read_count
+        })
+        
+    except Exception as e:
+        print(f"❌ Ошибка отметки сообщений как прочитанных: {e}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
 @app.route('/admin')
 @login_required
 def admin_panel():
