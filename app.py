@@ -605,6 +605,25 @@ def chat_with_seller(product_id):
     
     return render_template('chat.html', product=product, messages=messages)
 
+@app.route('/chat_simple/<int:product_id>')
+@login_required
+def chat_simple(product_id):
+    """Простой чат с продавцом товара для тестирования"""
+    print(f"💬 Открываем простой чат для товара {product_id}, пользователь {current_user.id}")
+    
+    product = Product.query.get_or_404(product_id)
+    print(f"📦 Товар найден: {product.name}, продавец: {product.seller.username} (ID: {product.seller_id})")
+    
+    # Получаем сообщения между текущим пользователем и продавцом
+    messages = Message.query.filter(
+        ((Message.sender_id == current_user.id) & (Message.receiver_id == product.seller_id)) |
+        ((Message.sender_id == product.seller_id) & (Message.receiver_id == current_user.id))
+    ).filter(Message.product_id == product_id).order_by(Message.created_at.asc()).all()
+    
+    print(f"📝 Найдено сообщений: {len(messages)}")
+    
+    return render_template('chat_simple.html', product=product, messages=messages)
+
 @app.route('/send_message', methods=['POST'])
 @login_required
 def send_message():
