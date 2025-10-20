@@ -95,11 +95,23 @@ def create_app(config_name='default'):
 app = create_app()
 
 # === Telegram уведомления ===
-TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8458514538:AAEQruDKFmiEwRlMS-MmtUJ6D6vF2VOQ9Sc')
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1172834372')  # ID админа для уведомлений
+
+# Проверяем наличие токена
+if not TELEGRAM_BOT_TOKEN:
+    print("⚠️ TELEGRAM_BOT_TOKEN не установлен в переменных окружения!")
+    print("🔧 Установите переменную TELEGRAM_BOT_TOKEN в настройках Render")
+    TELEGRAM_BOT_TOKEN = None
+else:
+    print(f"✅ TELEGRAM_BOT_TOKEN установлен: {TELEGRAM_BOT_TOKEN[:10]}...")
 
 def send_telegram_message(text: str, chat_id: str = None, keyboard: dict = None) -> bool:
     """Отправляет сообщение в Telegram с улучшенным логированием"""
+    if not TELEGRAM_BOT_TOKEN:
+        print("⚠️ TELEGRAM_BOT_TOKEN не установлен, пропускаем отправку")
+        return False
+        
     try:
         target_chat_id = chat_id or TELEGRAM_CHAT_ID
         print(f"📱 Отправляем Telegram сообщение в chat_id: {target_chat_id}")
@@ -137,6 +149,10 @@ def send_telegram_message(text: str, chat_id: str = None, keyboard: dict = None)
 
 def edit_telegram_message(text: str, chat_id: str, message_id: int, keyboard: dict = None) -> None:
     """Редактирует сообщение в Telegram"""
+    if not TELEGRAM_BOT_TOKEN:
+        print("⚠️ TELEGRAM_BOT_TOKEN не установлен, пропускаем редактирование")
+        return
+        
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText"
         payload = {
@@ -158,6 +174,10 @@ def edit_telegram_message(text: str, chat_id: str, message_id: int, keyboard: di
 
 def answer_callback_query(callback_query_id: str, text: str = None) -> None:
     """Отвечает на callback query"""
+    if not TELEGRAM_BOT_TOKEN:
+        print("⚠️ TELEGRAM_BOT_TOKEN не установлен, пропускаем ответ")
+        return
+        
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery"
         payload = {
@@ -216,6 +236,10 @@ def generate_auth_code():
 
 def send_auth_code_to_telegram(user, auth_code):
     """Отправляет код аутентификации в Telegram"""
+    if not TELEGRAM_BOT_TOKEN:
+        print("⚠️ TELEGRAM_BOT_TOKEN не установлен, пропускаем отправку кода")
+        return False
+        
     if not user.telegram_chat_id:
         return False
     
@@ -252,7 +276,7 @@ def ensure_schema():
                 print(f"✅ Таблица Message создана, сообщений: {message_count}")
             except Exception as e:
                 print(f"⚠️ Проблема с таблицей Message: {e}")
-                # Пытаемся создать таблицу вручную (только для PostgreSQL)
+                # Пытаемся создать таблицу вручную
                 try:
                     db_type = db.engine.url.drivername
                     if 'postgresql' in db_type:
@@ -284,18 +308,16 @@ def ensure_schema():
                 except Exception as e2:
                     print(f"❌ Не удалось создать таблицу Message: {e2}")
             
-            # Для PostgreSQL используем другой подход
-            conn = db.engine.connect()
-            
             # Проверяем, какая база данных используется
             db_type = db.engine.url.drivername
+            print(f"🗄️ Database type: {db_type}")
             
             if 'postgresql' in db_type:
                 print("🗄️ Using PostgreSQL - checking and adding columns")
-                # Для PostgreSQL нужно явно добавлять колонки
+                # Для PostgreSQL используем information_schema
                 try:
                     # Проверяем и добавляем колонки для таблицы user
-                    conn.execute(text("""
+                    db.session.execute(text("""
                         DO $$ 
                         BEGIN
                             -- Добавляем auth_code если не существует
@@ -309,34 +331,16 @@ def ensure_schema():
                                           WHERE table_name = 'user' AND column_name = 'auth_code_expires') THEN
                                 ALTER TABLE "user" ADD COLUMN auth_code_expires TIMESTAMP;
                             END IF;
+                            
+                            -- Добавляем stock если не существует
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                          WHERE table_name = 'product' AND column_name = 'stock') THEN
+                                ALTER TABLE "product" ADD COLUMN stock INTEGER DEFAULT 0;
+                            END IF;
                         END $$;
                     """))
                     print("✅ PostgreSQL columns added successfully")
                     
-                    # Проверяем таблицу message для PostgreSQL
-                    try:
-                        conn.execute(text("""
-                            DO $$ 
-                            BEGIN
-                                -- Создаем таблицу message если не существует
-                                IF NOT EXISTS (SELECT 1 FROM information_schema.tables 
-                                              WHERE table_name = 'message') THEN
-                                    CREATE TABLE message (
-                                        id SERIAL PRIMARY KEY,
-                                        sender_id INTEGER NOT NULL,
-                                        receiver_id INTEGER NOT NULL,
-                                        product_id INTEGER,
-                                        content TEXT NOT NULL,
-                                        is_read BOOLEAN DEFAULT FALSE,
-                                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                                    );
-                                END IF;
-                            END $$;
-                        """))
-                        print("✅ Message table checked/created for PostgreSQL")
-                    except Exception as e:
-                        print(f"⚠️ Message table check failed for PostgreSQL: {e}")
-                        
                 except Exception as e:
                     print(f"⚠️ PostgreSQL column addition failed: {e}")
             else:
@@ -345,70 +349,42 @@ def ensure_schema():
                 
                 # Проверяем таблицу product
                 try:
-                    res = conn.execute(text("PRAGMA table_info(product)"))
+                    res = db.session.execute(text("PRAGMA table_info(product)"))
                     cols = [row[1] for row in res]
                     if 'stock' not in cols:
                         print("🔄 Adding stock column to product table")
-                        conn.execute(text("ALTER TABLE product ADD COLUMN stock INTEGER DEFAULT 0"))
+                        db.session.execute(text("ALTER TABLE product ADD COLUMN stock INTEGER DEFAULT 0"))
                 except Exception as e:
                     print(f"⚠️ Product table check failed: {e}")
                 
                 # Проверяем таблицу user
                 try:
-                    res = conn.execute(text("PRAGMA table_info(user)"))
+                    res = db.session.execute(text("PRAGMA table_info(user)"))
                     cols = [row[1] for row in res]
                     print(f"📋 Current user table columns: {cols}")
                     
                     if 'telegram_username' not in cols:
                         print("🔄 Adding telegram_username column to user table")
-                        conn.execute(text("ALTER TABLE user ADD COLUMN telegram_username VARCHAR(100)"))
+                        db.session.execute(text("ALTER TABLE user ADD COLUMN telegram_username VARCHAR(100)"))
                     if 'telegram_chat_id' not in cols:
                         print("🔄 Adding telegram_chat_id column to user table")
-                        conn.execute(text("ALTER TABLE user ADD COLUMN telegram_chat_id VARCHAR(50)"))
+                        db.session.execute(text("ALTER TABLE user ADD COLUMN telegram_chat_id VARCHAR(50)"))
                     if 'is_banned' not in cols:
                         print("🔄 Adding is_banned column to user table")
-                        conn.execute(text("ALTER TABLE user ADD COLUMN is_banned BOOLEAN DEFAULT 0"))
+                        db.session.execute(text("ALTER TABLE user ADD COLUMN is_banned BOOLEAN DEFAULT 0"))
                     if 'is_admin' not in cols:
                         print("🔄 Adding is_admin column to user table")
-                        conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+                        db.session.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
                     if 'auth_code' not in cols:
                         print("🔄 Adding auth_code column to user table")
-                        conn.execute(text("ALTER TABLE user ADD COLUMN auth_code VARCHAR(6)"))
+                        db.session.execute(text("ALTER TABLE user ADD COLUMN auth_code VARCHAR(6)"))
                     if 'auth_code_expires' not in cols:
                         print("🔄 Adding auth_code_expires column to user table")
-                        conn.execute(text("ALTER TABLE user ADD COLUMN auth_code_expires DATETIME"))
+                        db.session.execute(text("ALTER TABLE user ADD COLUMN auth_code_expires DATETIME"))
                 except Exception as e:
                     print(f"⚠️ User table check failed: {e}")
             
-            # Проверяем таблицу message только для SQLite
-            if 'sqlite' in db_type:
-                try:
-                    res = conn.execute(text("PRAGMA table_info(message)"))
-                    cols = [row[1] for row in res]
-                    print(f"✅ Message table exists with columns: {cols}")
-                except Exception as e:
-                    print(f"⚠️ Message table check failed: {e}")
-                    # Создаем таблицу message для SQLite
-                    try:
-                        conn.execute(text("""
-                            CREATE TABLE IF NOT EXISTS message (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                sender_id INTEGER NOT NULL,
-                                receiver_id INTEGER NOT NULL,
-                                product_id INTEGER,
-                                content TEXT NOT NULL,
-                                is_read BOOLEAN DEFAULT FALSE,
-                                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                            )
-                        """))
-                        print("✅ Message table created for SQLite")
-                    except Exception as e2:
-                        print(f"❌ Failed to create Message table: {e2}")
-            else:
-                print("✅ Message table already handled for PostgreSQL")
-            
-            conn.commit()
-            conn.close()
+            db.session.commit()
             print("✅ Database schema migration completed")
         except Exception as e:
             print(f"❌ Database migration error: {e}")

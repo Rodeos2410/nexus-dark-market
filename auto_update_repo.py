@@ -44,7 +44,7 @@ def main():
         return False
     
     # Коммитим изменения
-    commit_message = "Удалена функция удаления пользователей из админ панели бота"
+    commit_message = "Исправлены ошибки развертывания на Render: PostgreSQL синтаксис и Telegram токен"
     if not run_command(f'git commit -m "{commit_message}"', "Создание коммита"):
         return False
     
