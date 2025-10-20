@@ -120,6 +120,33 @@ class LiveChat {
         this.loadingIndicator = document.getElementById('loading-indicator');
         this.emptyChat = document.getElementById('empty-chat');
         
+        // Проверяем, что все элементы найдены
+        console.log('🔍 Проверка DOM элементов:');
+        console.log('  chatContainer:', this.chatContainer);
+        console.log('  messagesContainer:', this.messagesContainer);
+        console.log('  messageForm:', this.messageForm);
+        console.log('  messageInput:', this.messageInput);
+        console.log('  typingIndicator:', this.typingIndicator);
+        console.log('  loadingIndicator:', this.loadingIndicator);
+        console.log('  emptyChat:', this.emptyChat);
+        
+        if (!this.chatContainer) {
+            console.error('❌ Не найден chat-container!');
+            return;
+        }
+        if (!this.messagesContainer) {
+            console.error('❌ Не найден messages-container!');
+            return;
+        }
+        if (!this.messageForm) {
+            console.error('❌ Не найден message-form!');
+            return;
+        }
+        if (!this.messageInput) {
+            console.error('❌ Не найден message-input!');
+            return;
+        }
+        
         this.productId = {{ product.id }};
         this.sellerId = {{ product.seller_id }};
         this.sellerName = '{{ product.seller.username }}';
@@ -168,6 +195,20 @@ class LiveChat {
         this.markMessagesAsRead();
         
         console.log('✅ Живой чат инициализирован');
+        
+        // Тестовое сообщение для проверки
+        setTimeout(() => {
+            console.log('🧪 Тестируем добавление сообщения...');
+            const testMessage = {
+                id: 999999,
+                content: 'Тестовое сообщение',
+                sender_id: this.currentUserId,
+                created_at: new Date().toISOString(),
+                is_read: false,
+                sender_username: 'Тест'
+            };
+            this.addMessageToChat(testMessage, true);
+        }, 2000);
     }
     
     getLastMessageId() {
@@ -380,6 +421,13 @@ class LiveChat {
         
         this.messagesContainer.appendChild(messageDiv);
         console.log(`✅ Сообщение добавлено в DOM:`, messageDiv);
+        console.log(`📊 Всего сообщений в контейнере: ${this.messagesContainer.children.length}`);
+        
+        // Проверяем, что сообщение действительно видимо
+        setTimeout(() => {
+            const isVisible = messageDiv.offsetHeight > 0;
+            console.log(`👁️ Сообщение видимо: ${isVisible}, высота: ${messageDiv.offsetHeight}px`);
+        }, 100);
         
         // Прокручиваем вниз если пользователь был внизу
         if (this.isUserAtBottom) {
@@ -469,6 +517,45 @@ class LiveChat {
 // Инициализация живого чата
 document.addEventListener('DOMContentLoaded', function() {
     window.liveChat = new LiveChat();
+    
+    // Глобальные функции для тестирования
+    window.testAddMessage = function(content = 'Тестовое сообщение') {
+        if (window.liveChat) {
+            const testMessage = {
+                id: Date.now(),
+                content: content,
+                sender_id: window.liveChat.currentUserId,
+                created_at: new Date().toISOString(),
+                is_read: false,
+                sender_username: 'Тест'
+            };
+            window.liveChat.addMessageToChat(testMessage, true);
+            console.log('🧪 Тестовое сообщение добавлено:', testMessage);
+        } else {
+            console.error('❌ LiveChat не инициализирован');
+        }
+    };
+    
+    window.testReceiveMessage = function(content = 'Полученное сообщение') {
+        if (window.liveChat) {
+            const testMessage = {
+                id: Date.now(),
+                content: content,
+                sender_id: window.liveChat.sellerId,
+                created_at: new Date().toISOString(),
+                is_read: false,
+                sender_username: window.liveChat.sellerName
+            };
+            window.liveChat.addMessageToChat(testMessage, false);
+            console.log('🧪 Тестовое полученное сообщение добавлено:', testMessage);
+        } else {
+            console.error('❌ LiveChat не инициализирован');
+        }
+    };
+    
+    console.log('🧪 Функции для тестирования:');
+    console.log('  testAddMessage("текст") - добавить отправленное сообщение');
+    console.log('  testReceiveMessage("текст") - добавить полученное сообщение');
     
     // Очистка при закрытии страницы
     window.addEventListener('beforeunload', () => {
