@@ -4,18 +4,82 @@
 
 {% block content %}
 <div class="auth-center">
-    <div class="auth-card" style="width: 100%; max-width: 1400px;">
+    <div class="auth-card database-container">
         <div class="product-card">
             <h2>🗄️ База данных пользователей</h2>
             
             <div class="database-stats">
-                <p>
-                    <strong>Всего пользователей:</strong> 
-                    <span>{{ users|length }}</span>
-                </p>
+                <div class="database-stats-card">
+                    <div class="stats-icon">👥</div>
+                    <div class="stats-info">
+                        <div class="stats-number">{{ users|length }}</div>
+                        <div class="stats-label">Всего пользователей</div>
+                    </div>
+                </div>
             </div>
             
-            <div class="database-table-container">
+            <!-- Мобильная версия - карточки -->
+            <div class="database-mobile-users">
+                {% for user in users %}
+                <div class="database-user-card">
+                    <div class="db-user-header">
+                        <div class="db-user-info">
+                            <div class="db-user-name">{{ user.username }}</div>
+                            <div class="db-user-id">ID: {{ user.id }}</div>
+                        </div>
+                        <div class="db-user-status">
+                            {% if user.is_admin %}
+                                <span class="status-badge" style="background: #2196F3;">Admin</span>
+                            {% elif user.is_banned %}
+                                <span class="status-badge status-banned">Banned</span>
+                            {% else %}
+                                <span class="status-badge status-active">User</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="db-user-details">
+                        <div class="db-detail">
+                            <span class="db-label">Email:</span>
+                            <span class="db-value">{{ user.email }}</span>
+                        </div>
+                        <div class="db-detail">
+                            <span class="db-label">Баланс:</span>
+                            <span class="db-value">{{ "%.2f"|format(user.balance) }}₽</span>
+                        </div>
+                        <div class="db-detail">
+                            <span class="db-label">Telegram:</span>
+                            <span class="db-value">
+                                {% if user.telegram_username %}
+                                    @{{ user.telegram_username }}
+                                    {% if user.telegram_chat_id %}
+                                        <span class="telegram-status active">✅ Настроен</span>
+                                        <br><small class="telegram-id">ID: {{ user.telegram_chat_id }}</small>
+                                    {% else %}
+                                        <span class="telegram-status warning">⚠️ Не настроен</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="telegram-status inactive">Не указан</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="db-detail">
+                            <span class="db-label">Регистрация:</span>
+                            <span class="db-value">
+                                {% if user.created_at %}
+                                    {{ user.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Десктопная версия - таблица -->
+            <div class="database-table-container desktop-only">
                 <table class="database-table">
                     <thead>
                         <tr>
@@ -70,7 +134,7 @@
                 </table>
             </div>
             
-            <div style="text-align: center; margin-top: 20px;">
+            <div class="database-back-container">
                 <a href="/admin" class="database-back-button">
                     ← Назад к админ панели
                 </a>

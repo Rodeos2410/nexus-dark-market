@@ -4,19 +4,19 @@
 
 {% block content %}
 <div class="auth-center">
-    <div class="auth-card" style="width: 100%; max-width: 1200px;">
+    <div class="auth-card admin-container">
         <div class="product-card">
             <h2>🔧 Админская панель</h2>
             
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
                     {% for message in messages %}
-                        <div style="color: green; text-align: center; margin: 10px;">{{ message }}</div>
+                        <div class="flash-message">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
             
-            <div style="background: #1a1a1f; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <div class="admin-stats-container">
                 <h3>📊 Статистика</h3>
                 <div class="admin-stats">
                     <div class="admin-stat-card">
@@ -38,15 +38,97 @@
                 </div>
                 
                 <!-- Кнопка просмотра БД -->
-                <div style="text-align: center; margin-top: 20px;">
-                    <a href="/admin/database" class="button" style="background: #4CAF50;">
+                <div class="admin-db-button">
+                    <a href="/admin/database" class="button db-button">
                         🗄️ Просмотр базы данных
                     </a>
                 </div>
             </div>
             
             <h3>👥 Управление пользователями</h3>
-            <div class="admin-table-container">
+            
+            <!-- Мобильная версия - карточки -->
+            <div class="admin-mobile-users">
+                {% for user in users %}
+                <div class="admin-user-card">
+                    <div class="user-card-header">
+                        <div class="user-info">
+                            <div class="user-name">{{ user.username }}</div>
+                            <div class="user-id">ID: {{ user.id }}</div>
+                        </div>
+                        <div class="user-status">
+                            {% if user.is_admin %}
+                                <span class="status-badge status-admin">Админ</span>
+                            {% endif %}
+                            {% if user.is_banned %}
+                                <span class="status-badge status-banned">Заблокирован</span>
+                            {% else %}
+                                <span class="status-badge status-active">Активен</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="user-card-details">
+                        <div class="user-detail">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value">{{ user.email }}</span>
+                        </div>
+                        <div class="user-detail">
+                            <span class="detail-label">Баланс:</span>
+                            <span class="detail-value">{{ "%.2f"|format(user.balance) }}₽</span>
+                        </div>
+                        <div class="user-detail">
+                            <span class="detail-label">Telegram:</span>
+                            <span class="detail-value">
+                                {% if user.telegram_username %}
+                                    @{{ user.telegram_username }}
+                                    {% if user.telegram_chat_id %}
+                                        <span class="telegram-status active">✅ Настроен</span>
+                                    {% else %}
+                                        <span class="telegram-status warning">⚠️ Нужен /start</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="telegram-status inactive">Не указан</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="user-detail">
+                            <span class="detail-label">Регистрация:</span>
+                            <span class="detail-value">{{ user.created_at.strftime('%d.%m.%Y') }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="user-card-actions">
+                        {% if user.id != current_user.id %}
+                            <div class="action-buttons">
+                                {% if user.is_banned %}
+                                    <button onclick="unbanUser({{ user.id }})" class="admin-action-button mobile-button" style="background: #4CAF50;">Разблокировать</button>
+                                {% else %}
+                                    <button onclick="banUser({{ user.id }})" class="admin-action-button mobile-button" style="background: #f44336;">Заблокировать</button>
+                                {% endif %}
+                                
+                                {% if not user.is_admin %}
+                                    <button onclick="makeAdmin({{ user.id }})" class="admin-action-button mobile-button" style="background: #9C27B0;">Сделать админом</button>
+                                {% else %}
+                                    <button onclick="removeAdmin({{ user.id }})" class="admin-action-button mobile-button" style="background: #FF9800;">Убрать админа</button>
+                                {% endif %}
+                                
+                                {% if user.telegram_username and not user.telegram_chat_id and user.username != 'admin' %}
+                                    <button onclick="setupTelegram({{ user.id }})" class="admin-action-button mobile-button" style="background: #2196F3;">Настроить Telegram</button>
+                                {% endif %}
+                                
+                                <button onclick="deleteUser({{ user.id }})" class="admin-action-button mobile-button" style="background: #d32f2f;">Удалить</button>
+                            </div>
+                        {% else %}
+                            <div class="current-user">Вы</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Десктопная версия - таблица -->
+            <div class="admin-table-container desktop-only">
                 <table class="admin-table">
                     <thead>
                         <tr>

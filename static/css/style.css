@@ -1701,3 +1701,425 @@ button:hover, .button:hover {
     text-align: center;
     min-width: 64px;
 }
+
+/* ===== МОБИЛЬНАЯ ОПТИМИЗАЦИЯ АДМИН ПАНЕЛИ ===== */
+
+/* Адаптивные контейнеры */
+.admin-container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.database-container {
+    width: 100%;
+    max-width: 1400px;
+}
+
+/* Flash сообщения */
+.flash-message {
+    color: #4CAF50;
+    text-align: center;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* Статистика админ панели */
+.admin-stats-container {
+    background: #1a1a1f;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.admin-stat-card {
+    background: #0f0f13;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.admin-stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.admin-stat-label {
+    font-size: 12px;
+    color: #9aa0a6;
+}
+
+.admin-db-button {
+    text-align: center;
+}
+
+.db-button {
+    background: #4CAF50 !important;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+/* Мобильные карточки пользователей */
+.admin-mobile-users {
+    display: block;
+}
+
+.admin-user-card {
+    background: #1a1a1f;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.user-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.user-id {
+    font-size: 12px;
+    color: #9aa0a6;
+}
+
+.user-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.user-card-details {
+    margin-bottom: 16px;
+}
+
+.user-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.detail-label {
+    font-size: 12px;
+    color: #9aa0a6;
+    font-weight: 500;
+}
+
+.detail-value {
+    font-size: 13px;
+    color: #fff;
+    text-align: right;
+    flex: 1;
+    margin-left: 10px;
+}
+
+.telegram-status {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+}
+
+.telegram-status.active {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+}
+
+.telegram-status.warning {
+    background: rgba(255, 152, 0, 0.2);
+    color: #FF9800;
+}
+
+.telegram-status.inactive {
+    background: rgba(158, 158, 158, 0.2);
+    color: #9e9e9e;
+}
+
+.user-card-actions {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    padding-top: 12px;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+}
+
+.mobile-button {
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+    border-radius: 6px !important;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.current-user {
+    color: #9aa0a6;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px;
+    background: rgba(158, 158, 158, 0.1);
+    border-radius: 6px;
+}
+
+/* Статистика базы данных */
+.database-stats {
+    margin-bottom: 20px;
+}
+
+.database-stats-card {
+    background: #1a1a1f;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.stats-icon {
+    font-size: 32px;
+    width: 60px;
+    height: 60px;
+    background: #0f0f13;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stats-info {
+    flex: 1;
+}
+
+.stats-number {
+    font-size: 28px;
+    font-weight: bold;
+    color: #4CAF50;
+    margin-bottom: 4px;
+}
+
+.stats-label {
+    font-size: 14px;
+    color: #9aa0a6;
+}
+
+/* Мобильные карточки базы данных */
+.database-mobile-users {
+    display: block;
+}
+
+.database-user-card {
+    background: #1a1a1f;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.db-user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.db-user-info {
+    flex: 1;
+}
+
+.db-user-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.db-user-id {
+    font-size: 12px;
+    color: #9aa0a6;
+}
+
+.db-user-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.db-user-details {
+    margin-bottom: 16px;
+}
+
+.db-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.db-label {
+    font-size: 12px;
+    color: #9aa0a6;
+    font-weight: 500;
+}
+
+.db-value {
+    font-size: 13px;
+    color: #fff;
+    text-align: right;
+    flex: 1;
+    margin-left: 10px;
+}
+
+.telegram-id {
+    color: #9aa0a6;
+    font-size: 10px;
+}
+
+.database-back-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.database-back-button {
+    background: #2196F3;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.3s ease;
+}
+
+.database-back-button:hover {
+    background: #1976D2;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .admin-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .admin-stat-card {
+        padding: 12px;
+    }
+    
+    .admin-stat-value {
+        font-size: 20px;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    
+    .mobile-button {
+        padding: 10px 12px !important;
+        font-size: 12px !important;
+    }
+    
+    .database-stats-card {
+        padding: 16px;
+    }
+    
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+    
+    .stats-number {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .admin-stat-value {
+        font-size: 18px;
+    }
+    
+    .user-card-header,
+    .db-user-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .user-status,
+    .db-user-status {
+        align-self: flex-start;
+    }
+    
+    .user-detail,
+    .db-detail {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .detail-value,
+    .db-value {
+        text-align: left;
+        margin-left: 0;
+    }
+    
+    .database-stats-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+}
+
+/* Скрытие десктопных элементов на мобильных */
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+/* Показ мобильных элементов только на мобильных */
+@media (min-width: 769px) {
+    .admin-mobile-users,
+    .database-mobile-users {
+        display: none !important;
+    }
+}
